@@ -17,6 +17,9 @@ Encrypting Reverse proxy for Google Cloud Storage.
 - [x] Must work as a sidecar deployment
 - [ ] ~~Work with arbitrary GCS calls~~ *NOT POSSIBLE*
 - [ ] Desired utilities to test: gcloud, gsutil, tensorflow, python SDK, go SDK, cURL
+  - [ ] Support Standard Multipart Upload 
+  - [ ] ~~Support XML API~~
+  - [ ] Support JSON API
 - [ ] Work for both HTTP and HTTPS
 - [ ] Provide Terraform deployment automation template
 - [x] Proxy should check if the traffic is bound for GCS and just pass along all other traffic
