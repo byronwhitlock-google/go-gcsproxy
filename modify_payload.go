@@ -17,23 +17,48 @@ type EncryptGcsPayload struct {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	contentType := f.Request.Header.Get("Content-Type")
+	// https://cloud.google.com/storage/docs/json_api/v1/objects
+
+	// We are handling insert
+	// https://cloud.google.com/storage/docs/json_api/v1/objects/insert
+	/*
+		POST https://storage.googleapis.com/upload/storage/v1/b/bucket/o
+	*/
 
 	//1 only MITM the storage.googleapis.com
 	if f.Request.URL.Host != "storage.googleapis.com" {
 		return
 	}
-
 	// only encrypt calls to the with GCS upload API
-	if !strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b") {
+	if !strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
 		return
 	}
 
-	// ONLY look at post methods
+	//ONLY look at post methods
+	// NOTE: PUT methods are for resumable downloads
 	if f.Request.Method != "POST" {
 		return
 	}
 
-	// we support
+	// we support uploadType=multipart
+	qs := f.Request.URL.Query()
+	if qs.Get("uploadType") == "multipart" {
+
+		// Extract the boundary from the Content-Type header.
+		boundary := strings.Split(contentType, "boundary=")[1]
+		boundary = strings.Trim(boundary, "'")
+
+		// Parse the multipart request.
+		// TODO Fix this mess of string parsing and use the native stream
+		metadata, fileContent, err := ParseMultipartRequest(strings.NewReader(string(f.Request.Body)), boundary)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Metadata:", metadata)
+		fmt.Println("File Content:", fileContent)
+
+	}
 
 	fullBody := f.Request.Body
 

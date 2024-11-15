@@ -20,6 +20,7 @@ require (
 )
 
 require (
+	github.com/Jeffail/gabs/v2 v2.7.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/lqqyt2423/go-mitmproxy v1.8.5
 	golang.org/x/sys v0.25.0 // indirect
