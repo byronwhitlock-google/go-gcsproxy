@@ -60,7 +60,7 @@ func encrypt_tink(plaintext string) (string,error){
 
 //     // Print the decrypted text
 //     fmt.Printf("Decrypted text: %s\n", string(decrypted))
-// 	return decrypted,nil
+// 	return string(decrypted),nil
 // }
 
 // // func main() {
