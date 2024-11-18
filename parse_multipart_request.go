@@ -2,57 +2,25 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"mime/multipart"
+	"net/textproto"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// ParseMultipartRequest parses a multipart request like the one provided.
-func ParseMultipartRequest(reader io.Reader, boundary string) (string, string, error) {
-	// Create a multipart reader with the given boundary.
+func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, error) {
 	mr := multipart.NewReader(reader, boundary)
+	// New empty buffer
+	body := &bytes.Buffer{}
+	// Creates a new multipart Writer with a random boundary, writing to the empty
+	// buffer
+	writer := multipart.NewWriter(body)
 
-	// Parse the first part (JSON metadata).
-	part, err := mr.NextPart()
-	if err != nil {
-		return "", "", fmt.Errorf("error reading first part: %w", err)
+	err2:= writer.SetBoundary(boundary)
+	if err2 != nil {
+		log.Fatal(err2)
 	}
-
-	// Decode the JSON metadata.
-	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, part)
-	if err != nil {
-		return "", "", fmt.Errorf("error reading file content: %w", err)
-	}
-	var gcsMetadata string
-	gcsMetadata = string(buf.Bytes())
-
-	//var gcsMetadata map[string]interface{}
-	//json.Unmarshal(jsonBuf.Bytes(), &gcsMetadata)
-
-	// Parse the second part (file content).
-	part, err = mr.NextPart()
-	if err != nil {
-		return "", "", fmt.Errorf("error reading second part: %w", err)
-	}
-	// Decode the JSON metadata.
-	buf = new(bytes.Buffer)
-	_, err = io.Copy(buf, part)
-	if err != nil {
-		return "", "", fmt.Errorf("error reading file content: %w", err)
-	}
-	var fileContent string
-	fileContent = string(buf.Bytes())
-
-	return gcsMetadata, fileContent, nil
-}
-
-
-func ParseMultipartRequest1(reader io.Reader, boundary string) (string, string, error) {
-	mr := multipart.NewReader(reader, boundary)
-
 	for {
 		// Read the next part
 		part, err := mr.NextPart()
@@ -66,16 +34,30 @@ func ParseMultipartRequest1(reader io.Reader, boundary string) (string, string, 
 
 		// Process the part, get header , part value
 		header := part.Header
-		fmt.Println("Processing Header: %s\n", header)
+		metadataHeader := textproto.MIMEHeader{}
+		//Loop through Map 
+		for k, v := range header {
+			metadataHeader.Set(k,v[0])
+    	}
+		
+		writer_part, err := writer.CreatePart(metadataHeader)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		// Get Value of part 
 		if part.FileName() == "" {
-			fieldValue, err := io.ReadAll(part)
+			fieldValue , err := io.ReadAll(part)
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("File content: %s\n", string(fieldValue))
+			// Write the part body
+			writer_part.Write([]byte(fieldValue))
+			
 		}
+		
 	}
-    return "","",nil
+	writer.Close()
+    return body,nil
 
 }
