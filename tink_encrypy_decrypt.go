@@ -5,34 +5,35 @@ import (
 
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/keyset"
+	log "github.com/sirupsen/logrus"
 )
 
-func encrypt_tink(plaintext string) (string,error){
+func encrypt_tink(plaintext []byte) ([]byte,error){
 	// Generate a new keyset handle using the AES256-GCM template
     kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
     if err != nil {
         fmt.Printf("Error generating keyset: %v\n", err)
-        return "",err
+        log.Fatal(err)
     }
 
     // Get an AEAD primitive from the keyset handle
     a, err := aead.New(kh)
     if err != nil {
         fmt.Printf("Error creating AEAD primitive: %v\n", err)
-        return "",err
+        log.Fatal(err)
     }
 
 	aad := []byte("")
 	// Encrypt the string
-    ciphertext, err := a.Encrypt([]byte(plaintext),aad)
+    ciphertext, err := a.Encrypt(plaintext,aad)
     if err != nil {
         fmt.Printf("Error encrypting data: %v\n", err)
-        return "", err
+        log.Fatal(err)
     }
 
     // Print the ciphertext
     //fmt.Printf("Encrypted text: %x\n", ciphertext)
-	return string(ciphertext),nil
+	return ciphertext,nil
 
 }
 

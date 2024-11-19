@@ -54,7 +54,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 		if err != nil {
 			panic(err)
 		}
-
+		//f.Request.Header.Set("Content-Type", "application/octet-stream")
 		f.Request.Body = body.Bytes()
 
 	}
