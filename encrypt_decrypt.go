@@ -1,12 +1,33 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/base64"
 	"fmt"
+	"io"
 
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/keyset"
 	log "github.com/sirupsen/logrus"
 )
+
+func base64_md5hash(bytestream []byte) (string){
+    hash := md5.New()
+	_, err := io.WriteString(hash, string(bytestream))
+	if err != nil {
+		fmt.Println("Error computing MD5 hash:", err)
+		log.Fatal(err)
+	}
+	md5Hash := hash.Sum(nil) // Get the computed MD5 hash as a byte array
+
+	// Step 2: Encode the MD5 hash as Base64
+	base64MD5Hash := base64.StdEncoding.EncodeToString(md5Hash)
+
+	// Print the result
+	fmt.Println("Base64-encoded MD5 hash:", base64MD5Hash)
+    return base64MD5Hash
+}
+
 
 func encrypt_tink(plaintext []byte) ([]byte,error){
 	// Generate a new keyset handle using the AES256-GCM template
@@ -64,44 +85,3 @@ func encrypt_tink(plaintext []byte) ([]byte,error){
 // 	return string(decrypted),nil
 // }
 
-// // func main() {
-// //     // Generate a new keyset handle using the AES256-GCM template
-// //     kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
-// //     if err != nil {
-// //         fmt.Printf("Error generating keyset: %v\n", err)
-// //         return
-// //     }
-
-// //     // Get an AEAD primitive from the keyset handle
-// //     a, err := aead.New(kh)
-// //     if err != nil {
-// //         fmt.Printf("Error creating AEAD primitive: %v\n", err)
-// //         return
-// //     }
-
-// //     // String to be encrypted
-// //     plaintext := "this is a secret message"
-
-// //     // Additional data to be authenticated but not encrypted (can be nil)
-// //     aad := []byte("")
-
-// //     // Encrypt the string
-// //     ciphertext, err := a.Encrypt([]byte(plaintext), aad)
-// //     if err != nil {
-// //         fmt.Printf("Error encrypting data: %v\n", err)
-// //         return
-// //     }
-
-// //     // Print the ciphertext
-// //     fmt.Printf("Encrypted text: %x\n", ciphertext)
-
-// //     // Decrypt the ciphertext back to the original plaintext
-// //     decrypted, err := a.Decrypt(ciphertext, aad)
-// //     if err != nil {
-// //         fmt.Printf("Error decrypting data: %v\n", err)
-// //         return
-// //     }
-
-// //     // Print the decrypted text
-// //     fmt.Printf("Decrypted text: %s\n", string(decrypted))
-// // }

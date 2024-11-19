@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -50,12 +51,16 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 		// Parse the multipart request.
 		// TODO Fix this mess of string parsing and use the native stream
-		body,err := ParseMultipartRequest(strings.NewReader(string(f.Request.Body)), boundary)
+		body,original_content,err := ParseMultipartRequest(strings.NewReader(string(f.Request.Body)), boundary)
 		if err != nil {
 			panic(err)
 		}
+		fmt.Println(string(original_content))
 		//f.Request.Header.Set("Content-Type", "application/octet-stream")
 		f.Request.Body = body.Bytes()
+		org_encoded_str:=base64_md5hash([]byte(string(original_content)))
+		f.Request.Header.Set("gcs-proxy-original-md5-hash",org_encoded_str)
+		f.Request.Header.Set("gcs-proxy-original-content-length",string(len(original_content)))
 
 	}
 

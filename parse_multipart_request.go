@@ -11,11 +11,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, error) {
+func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []byte, error) {
 	mr := multipart.NewReader(reader, boundary)
 	// New empty buffer
 	body := &bytes.Buffer{}
 	num:=0
+	var original_content []byte
 	// Creates a new multipart Writer with a random boundary, writing to the empty
 	// buffer
 	writer := multipart.NewWriter(body)
@@ -62,6 +63,7 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, er
 			}
 			// Write/encrypt if needed the part body
 			if num == 2{
+				original_content=fieldValue
 				encrypted_data ,err := encrypt_tink(fieldValue)
 				if err != nil {
 					log.Fatal(err)
@@ -84,8 +86,9 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, er
 						fmt.Println("Error marshaling to JSON:", err)
 					}
 
-					writer_part.Write([]byte(string(jsonData)))
+					//writer_part.Write([]byte(string(jsonData)))
 
+					writer_part.Write(jsonData)
 			}
 			
 		}
@@ -93,6 +96,6 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, er
 	}
 	writer.Close()
 	fmt.Println(body)
-    return body,nil
+    return body,original_content,nil
 
 }
