@@ -52,8 +52,6 @@ func encrypt_tink(plaintext []byte) ([]byte,error){
         log.Fatal(err)
     }
 
-    // Print the ciphertext
-    //fmt.Printf("Encrypted text: %x\n", ciphertext)
 	return ciphertext,nil
 
 }

@@ -12,8 +12,6 @@ import (
 )
 
 
-
-
 func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []byte, error) {
 	mr := multipart.NewReader(reader, boundary)
 	// New empty buffer
@@ -45,12 +43,7 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 		metadataHeader := textproto.MIMEHeader{}
 		//Loop through Map 
 		for k, v := range header {
-			// if num == 2 && k =="Content-Type"{
-			// 		metadataHeader.Set(k,"application/octet-stream")
-			// }else {
-					metadataHeader.Set(k,v[0])
-			//}
-			
+			metadataHeader.Set(k,v[0])
     	}
 		
 		writer_part, err := writer.CreatePart(metadataHeader)
@@ -82,14 +75,10 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 					}
 					fmt.Println(result)
 
-					//result["contentType"]="application/octet-stream"
-
 					jsonData, err := json.Marshal(result)
 					if err != nil {
 						fmt.Println("Error marshaling to JSON:", err)
 					}
-
-					//writer_part.Write([]byte(string(jsonData)))
 
 					writer_part.Write(jsonData)
 			}
@@ -98,7 +87,7 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 		
 	}
 	writer.Close()
-	//fmt.Println(body)
+	
     return body,original_content,nil
 
 }
