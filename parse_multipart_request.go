@@ -11,6 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+
 func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []byte, error) {
 	mr := multipart.NewReader(reader, boundary)
 	// New empty buffer
@@ -79,7 +80,7 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 					}
 					fmt.Println(result)
 
-					result["contentType"]="application/octet-stream"
+					//result["contentType"]="application/octet-stream"
 
 					jsonData, err := json.Marshal(result)
 					if err != nil {
@@ -95,7 +96,7 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 		
 	}
 	writer.Close()
-	fmt.Println(body)
+	//fmt.Println(body)
     return body,original_content,nil
 
 }
