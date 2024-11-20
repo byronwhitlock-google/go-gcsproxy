@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -69,7 +68,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 		fmt.Println(body)
 		f.Request.Header.Set("gcs-proxy-original-content-length",string(len(f.Request.Body)))
 		//f.Request.Header.Set("Content-Type", "application/octet-stream")
-		//f.Request.Body = body.Bytes()
+		f.Request.Body = body.Bytes()
 		org_encoded_str=base64_md5hash(original_content)
 
 		f.Request.Header.Set("gcs-proxy-original-md5-hash",org_encoded_str)
@@ -80,7 +79,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 		return
 	}
 	
-	f.Request.Header.Set("Content-Length", strconv.Itoa(len(f.Request.Body)))
+	//f.Request.Header.Set("Content-Length", strconv.Itoa(len(f.Request.Body)))
 	
 }
 

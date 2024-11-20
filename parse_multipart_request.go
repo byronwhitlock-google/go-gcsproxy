@@ -12,6 +12,8 @@ import (
 )
 
 
+
+
 func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []byte, error) {
 	mr := multipart.NewReader(reader, boundary)
 	// New empty buffer
@@ -43,11 +45,11 @@ func ParseMultipartRequest(reader io.Reader, boundary string) (*bytes.Buffer, []
 		metadataHeader := textproto.MIMEHeader{}
 		//Loop through Map 
 		for k, v := range header {
-			if num == 2 && k =="Content-Type"{
-					metadataHeader.Set(k,"application/octet-stream")
-			}else {
+			// if num == 2 && k =="Content-Type"{
+			// 		metadataHeader.Set(k,"application/octet-stream")
+			// }else {
 					metadataHeader.Set(k,v[0])
-			}
+			//}
 			
     	}
 		
