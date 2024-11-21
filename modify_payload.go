@@ -16,119 +16,81 @@ type EncryptGcsPayload struct {
 	proxy.BaseAddon
 }
 
-var boundary string
-var org_encoded_str string
+// https://cloud.google.com/storage/docs/json_api/v1/objects
+type GCS_METHOD int
 
+const (
+	multiPartUpload   GCS_METHOD = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
+	singlePartUpload                    // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
+	resumableUpload                     // uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
+	simpleDownload                      // VERB=GET, uri=/.... TODO
+	streamingDownload                   // unsupported
+	passThru                            // all other requests
+)
+
+func InterceptGcsMethod(f *proxy.Flow) GCS_METHOD {
+	if f.Request.URL.Host == "storage.googleapis.com" &&
+		strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") &&
+		f.Request.Method == "POST" {
+		if f.Request.URL.Query().Get("uploadType") == "multipart" {
+			return multiPartUpload
+		}
+		if f.Request.URL.Query().Get("uploadType") == "media" {
+			return singlePartUpload
+		}
+	}
+	return passThru
+}
 
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
-	contentType := f.Request.Header.Get("Content-Type")
-	// https://cloud.google.com/storage/docs/json_api/v1/objects
-
-	// We are handling insert
-	// https://cloud.google.com/storage/docs/json_api/v1/objects/insert
-	/*
-		POST https://storage.googleapis.com/upload/storage/v1/b/bucket/o
-	*/
-
-	//1 only MITM the storage.googleapis.com
-	if f.Request.URL.Host != "storage.googleapis.com" {
-		return
-	}
-	// only encrypt calls to the with GCS upload API
-	if !strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
-		return
-	}
-
-	//ONLY look at post methods
-	// NOTE: PUT methods are for resumable downloads
-	if f.Request.Method != "POST" {
-		return
-	}
-
-	// we support uploadType=multipart
-	qs := f.Request.URL.Query()
-	if qs.Get("uploadType") == "multipart" {
-
-		// Extract the boundary from the Content-Type header.
-		boundary = strings.Split(contentType, "boundary=")[1]
-		boundary = strings.Trim(boundary, "'")
+	if InterceptGcsMethod(f) == multiPartUpload {
 
 		// Parse the multipart request.
 		// TODO Fix this mess of string parsing and use the native stream
-		body,original_content,err := ParseMultipartRequest(strings.NewReader(string(f.Request.Body)), boundary)
+		// TODO untangle parse multipart request from CreateMultipart request. We need to do this so we can unconditionally rewrite single part uploads to multipart in order to add extra gcs object metadata
+		encrypted_request, unencrypted_file_content, err := ParseMultipartRequest(f)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(string(original_content))
-		fmt.Println(body)
-		f.Request.Header.Set("gcs-proxy-original-content-length",string(len(f.Request.Body)))
-		
-		f.Request.Body = body.Bytes()
-		org_encoded_str=base64_md5hash(original_content)
+		fmt.Println(string(unencrypted_file_content))
+		fmt.Println(encrypted_request)
 
-		f.Request.Header.Set("gcs-proxy-original-md5-hash",org_encoded_str)
+		f.Request.Header.Set("gcs-proxy-original-content-length",
+			string(len(f.Request.Body)))
 
+		f.Request.Body = encrypted_request.Bytes()
+
+		f.Request.Header.Set("gcs-proxy-original-md5-hash",
+			base64_md5hash(unencrypted_file_content))
 	}
-
-	if strings.Contains(contentType, "text/html") {
-		return
-	}
-	
 }
 
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
-	contentType := f.Response.Header.Get("Content-Type")
-	if strings.Contains(contentType, "text/html") {
-		return
-	}
 
-	// https://cloud.google.com/storage/docs/json_api/v1/objects
-
-	// We are handling insert
-	// https://cloud.google.com/storage/docs/json_api/v1/objects/insert
-	/*
-		POST https://storage.googleapis.com/upload/storage/v1/b/bucket/o
-	*/
-
-	//1 only MITM the storage.googleapis.com
-	if f.Request.URL.Host != "storage.googleapis.com" {
-		return
-	}
-	// only encrypt calls to the with GCS upload API
-	if !strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
-		return
-	}
-
-	//ONLY look at post methods
-	// NOTE: PUT methods are for resumable downloads
-	if f.Request.Method != "POST" {
-		return
-	}
-
-	// we support uploadType=multipart
-	qs := f.Request.URL.Query()
-	if qs.Get("uploadType") == "multipart" {
+	if InterceptGcsMethod(f) == multiPartUpload {
 		fmt.Println("Multipart")
-		
-		
-		var result map[string]string
-		err:=json.Unmarshal(f.Response.Body, &result)
+
+		var jsonResponse map[string]string
+		// turn the response body into a dynamic json map we can use
+		err := json.Unmarshal(f.Response.Body, &jsonResponse)
 		if err != nil {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
 		}
-		fmt.Println(result)
+		fmt.Println(jsonResponse)
 
-		result["md5Hash"]=org_encoded_str
-		
-		jsonData, err := json.Marshal(result)
-			if err != nil {
-						fmt.Println("Error marshaling to JSON:", err)
-			}
+		// update the response with the orginal md5 hash so gsutil/gcloud does not complain
+		jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
 
+		jsonData, err := json.Marshal(jsonResponse)
+		if err != nil {
+			fmt.Println("Error marshaling to JSON:", err)
+		}
+
+		//fmt.Println(jsonData)
 		f.Response.Body = jsonData
+
+		// recalculate content length
+		f.Response.ReplaceToDecodedBody()
 	}
-	
 }
-
-

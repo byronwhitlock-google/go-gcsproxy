@@ -32,8 +32,6 @@ type Config struct {
 
 	Upstream     string // upstream proxy
 	UpstreamCert bool   // Connect to upstream server to look up certificate details. Default: True
-
-	filename string // read config from the filename
 }
 
 func main() {
