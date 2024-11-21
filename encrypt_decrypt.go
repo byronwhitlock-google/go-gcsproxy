@@ -11,8 +11,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func base64_md5hash(bytestream []byte) (string){
-    hash := md5.New()
+func base64_md5hash(bytestream []byte) string {
+	hash := md5.New()
 	_, err := io.WriteString(hash, string(bytestream))
 	if err != nil {
 		fmt.Println("Error computing MD5 hash:", err)
@@ -25,34 +25,33 @@ func base64_md5hash(bytestream []byte) (string){
 
 	// Print the result
 	fmt.Println("Base64-encoded MD5 hash:", base64MD5Hash)
-    return base64MD5Hash
+	return base64MD5Hash
 }
 
-
-func encrypt_tink(plaintext []byte) ([]byte,error){
+func encrypt_tink(plaintext []byte) ([]byte, error) {
 	// Generate a new keyset handle using the AES256-GCM template
-    kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
-    if err != nil {
-        fmt.Printf("Error generating keyset: %v\n", err)
-        log.Fatal(err)
-    }
+	kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
+	if err != nil {
+		fmt.Printf("Error generating keyset: %v\n", err)
+		log.Fatal(err)
+	}
 
-    // Get an AEAD primitive from the keyset handle
-    a, err := aead.New(kh)
-    if err != nil {
-        fmt.Printf("Error creating AEAD primitive: %v\n", err)
-        log.Fatal(err)
-    }
+	// Get an AEAD primitive from the keyset handle
+	a, err := aead.New(kh)
+	if err != nil {
+		fmt.Printf("Error creating AEAD primitive: %v\n", err)
+		log.Fatal(err)
+	}
 
 	aad := []byte("")
 	// Encrypt the string
-    ciphertext, err := a.Encrypt(plaintext,aad)
-    if err != nil {
-        fmt.Printf("Error encrypting data: %v\n", err)
-        log.Fatal(err)
-    }
+	ciphertext, err := a.Encrypt(plaintext, aad)
+	if err != nil {
+		fmt.Printf("Error encrypting data: %v\n", err)
+		log.Fatal(err)
+	}
 
-	return ciphertext,nil
+	return ciphertext, nil
 
 }
 
@@ -82,4 +81,3 @@ func encrypt_tink(plaintext []byte) ([]byte,error){
 //     fmt.Printf("Decrypted text: %s\n", string(decrypted))
 // 	return string(decrypted),nil
 // }
-
