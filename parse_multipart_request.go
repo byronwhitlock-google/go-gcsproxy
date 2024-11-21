@@ -31,7 +31,7 @@ func GetMultipartMimeHeader(part *multipart.Part) textproto.MIMEHeader {
 	return mimeHeader
 }
 
-func ParseMultipartRequest(f *proxy.Flow) (encrypted_request *bytes.Buffer, unencrypted_file_content []byte, err error) {
+func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) {
 
 	// Extract the boundary from the Content-Type header.
 	contentType := f.Request.Header.Get("Content-Type")
@@ -42,12 +42,14 @@ func ParseMultipartRequest(f *proxy.Flow) (encrypted_request *bytes.Buffer, unen
 	bodyReader := strings.NewReader(string(f.Request.Body))
 
 	multipartReader := multipart.NewReader(bodyReader, boundary)
+	encrypted_request := &bytes.Buffer{}
+	unencrypted_file_content := &bytes.Buffer{}
 
 	// Creates a new multipart Writer with a random boundary, writing to the empty
 	// buffer
 	multipartWriter := multipart.NewWriter(encrypted_request)
 
-	err = multipartWriter.SetBoundary(boundary)
+	err := multipartWriter.SetBoundary(boundary)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -57,9 +59,13 @@ func ParseMultipartRequest(f *proxy.Flow) (encrypted_request *bytes.Buffer, unen
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Create the first part
 	// grab the mime type for first part (should be application/json)
-	writer_part, err := multipartWriter.CreatePart(GetMultipartMimeHeader(part))
+	// Process the part, get header , part value
+	mimeHeader := GetMultipartMimeHeader(part)
+	fmt.Println(mimeHeader)
+	writer_part, err := multipartWriter.CreatePart(mimeHeader)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,9 +85,9 @@ func ParseMultipartRequest(f *proxy.Flow) (encrypted_request *bytes.Buffer, unen
 	fmt.Println(gcsObjectMetadataMap)
 
 	// store some extra metadata in GCS to help us on later requests
-	gcsObjectMetadataMap["x-unencrypted-content-length"] = string(len(f.Request.Body))
-	gcsObjectMetadataMap["x-md5Hash"] = ""
-	gcsObjectMetadataMap["x-tink-encryption"] = "1"
+	//gcsObjectMetadataMap["x-unencrypted-content-length"] = string(len(f.Request.Body))
+	//gcsObjectMetadataMap["x-md5Hash"] = ""
+	//gcsObjectMetadataMap["x-tink-encryption"] = "1"
 
 	// Now write the gcs object metadata back to the multipart writer
 	jsonData, err := json.Marshal(gcsObjectMetadataMap)
@@ -106,13 +112,15 @@ func ParseMultipartRequest(f *proxy.Flow) (encrypted_request *bytes.Buffer, unen
 
 	// Get file contents
 	if part.FileName() == "" {
-		unencrypted_file_content, err := io.ReadAll(part)
+		rawBytes, err := io.ReadAll(part)
+		unencrypted_file_content = bytes.NewBuffer(rawBytes)
+
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		// Encrypt the intercepted file
-		encrypted_data, err := encrypt_tink(unencrypted_file_content)
+		encrypted_data, err := encrypt_tink(unencrypted_file_content.Bytes())
 		if err != nil {
 			log.Fatal(err)
 		}

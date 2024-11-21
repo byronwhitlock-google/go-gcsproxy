@@ -53,7 +53,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(string(unencrypted_file_content))
+		fmt.Println(unencrypted_file_content)
 		fmt.Println(encrypted_request)
 
 		f.Request.Header.Set("gcs-proxy-original-content-length",
@@ -62,7 +62,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 		f.Request.Body = encrypted_request.Bytes()
 
 		f.Request.Header.Set("gcs-proxy-original-md5-hash",
-			base64_md5hash(unencrypted_file_content))
+			base64_md5hash(unencrypted_file_content.Bytes()))
 	}
 }
 
