@@ -2,3 +2,6 @@
 /bin/
 /dist/
 .vscode
+.venv
+**/__pycache__/
+
