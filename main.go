@@ -30,12 +30,20 @@ type Config struct {
 	Dump        string   // dump filename
 	DumpLevel   int      // dump level: 0 - header, 1 - header + body
 
+	// kms options
+	KmsResourceName string
+
 	Upstream     string // upstream proxy
 	UpstreamCert bool   // Connect to upstream server to look up certificate details. Default: True
+
+	KmsURI string // URI to KMS key for encryption
 }
 
+// global config variable
+var config *Config
+
 func main() {
-	config := loadConfig()
+	config = loadConfig()
 
 	if config.Debug > 0 {
 		rawLog.SetFlags(rawLog.LstdFlags | rawLog.Lshortfile)
@@ -112,11 +120,13 @@ func loadConfig() *Config {
 	flag.BoolVar(&config.SslInsecure, "ssl_insecure", true, "not verify upstream server SSL/TLS certificates.")
 	flag.Var((*arrayValue)(&config.IgnoreHosts), "ignore_hosts", "a list of ignore hosts")
 	flag.Var((*arrayValue)(&config.AllowHosts), "allow_hosts", "a list of allow hosts")
-	flag.StringVar(&config.CertPath, "cert_path", "/Users/byronwhitlock/certs", "path of generate cert files")
+	flag.StringVar(&config.CertPath, "cert_path", "/Users/byronwhitlock/certs", "path to generated cert files")
 	flag.IntVar(&config.Debug, "debug", 2, "debug mode: 1 - print debug log, 2 - show debug from")
 	flag.StringVar(&config.Dump, "dump", "", "dump filename")
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
+	flag.StringVar(&config.KmsResourceName, "kms_project", "projects/ymail-central-logsink-0357/locations/global/keyRings/gcsproxy-test/cryptoKeys/gcsproxy-test-ring/cryptoKeyVersions/1", "Payload will be encrypted with keys stored in KMS ")
+
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
 
