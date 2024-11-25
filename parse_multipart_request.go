@@ -127,6 +127,7 @@ func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) 
 
 		// write the final encrypted part
 		writer_part.Write(encrypted_data)
+
 	}
 	multipartWriter.Close()
 

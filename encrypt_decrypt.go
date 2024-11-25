@@ -8,8 +8,16 @@ import (
 
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/keyset"
+	"github.com/google/tink/go/tink"
 	log "github.com/sirupsen/logrus"
 )
+var kh *keyset.Handle
+var err error
+var a tink.AEAD
+var aad = []byte("")
+
+
+
 
 func base64_md5hash(bytestream []byte) string {
 	hash := md5.New()
@@ -30,20 +38,20 @@ func base64_md5hash(bytestream []byte) string {
 
 func encrypt_tink(plaintext []byte) ([]byte, error) {
 	// Generate a new keyset handle using the AES256-GCM template
-	kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
+	kh, err = keyset.NewHandle(aead.AES256GCMKeyTemplate())
 	if err != nil {
 		fmt.Printf("Error generating keyset: %v\n", err)
 		log.Fatal(err)
 	}
 
 	// Get an AEAD primitive from the keyset handle
-	a, err := aead.New(kh)
+	a, err = aead.New(kh)
 	if err != nil {
 		fmt.Printf("Error creating AEAD primitive: %v\n", err)
 		log.Fatal(err)
 	}
 
-	aad := []byte("")
+	
 	// Encrypt the string
 	ciphertext, err := a.Encrypt(plaintext, aad)
 	if err != nil {
@@ -55,29 +63,16 @@ func encrypt_tink(plaintext []byte) ([]byte, error) {
 
 }
 
-// func decrypt_tink(ciphertext string) (string,error) {
-// 	// Generate a new keyset handle using the AES256-GCM template
-//     kh, err := keyset.NewHandle(aead.AES256GCMKeyTemplate())
-//     if err != nil {
-//         fmt.Printf("Error generating keyset: %v\n", err)
-//         return
-//     }
+func decrypt_tink(ciphertext []byte) ([]byte,error) {
+	
+	// Decrypt the ciphertext back to the original plaintext
+    decrypted, err := a.Decrypt(ciphertext, aad)
+    if err != nil {
+        fmt.Printf("Error decrypting data: %v\n", err)
+        log.Fatal(err)
+    }
 
-//     // Get an AEAD primitive from the keyset handle
-//     a, err := aead.New(kh)
-//     if err != nil {
-//         fmt.Printf("Error creating AEAD primitive: %v\n", err)
-//         return
-//     }
-
-// 	// Decrypt the ciphertext back to the original plaintext
-//     decrypted, err := a.Decrypt(ciphertext, aad)
-//     if err != nil {
-//         fmt.Printf("Error decrypting data: %v\n", err)
-//         return
-//     }
-
-//     // Print the decrypted text
-//     fmt.Printf("Decrypted text: %s\n", string(decrypted))
-// 	return string(decrypted),nil
-// }
+    // Print the decrypted text
+    fmt.Printf("Decrypted text: %s\n", string(decrypted))
+	return decrypted,nil
+}

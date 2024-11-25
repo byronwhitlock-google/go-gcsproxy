@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -39,6 +40,13 @@ func InterceptGcsMethod(f *proxy.Flow) GCS_METHOD {
 			return singlePartUpload
 		}
 	}
+
+	if f.Request.URL.Host == "storage.googleapis.com" && 
+		strings.HasPrefix(f.Request.URL.Path, "/download") &&
+		f.Request.Method == "GET" {
+			return simpleDownload
+		}
+
 	return passThru
 }
 
@@ -54,7 +62,8 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 			panic(err)
 		}
 		fmt.Println(unencrypted_file_content)
-		fmt.Println(encrypted_request)
+		fmt.Println("Hash Value at Request")
+		fmt.Println(base64_md5hash(unencrypted_file_content.Bytes()))
 
 		f.Request.Header.Set("gcs-proxy-original-content-length",
 			string(len(f.Request.Body)))
@@ -87,10 +96,48 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 			fmt.Println("Error marshaling to JSON:", err)
 		}
 
-		//fmt.Println(jsonData)
 		f.Response.Body = jsonData
 
 		// recalculate content length
 		f.Response.ReplaceToDecodedBody()
+	}
+
+	if InterceptGcsMethod(f) == simpleDownload {
+		fmt.Println("simpleDownload")
+		//fmt.Println(string(f.Response.Body))
+
+		// Update the response content with the decrypted content
+		original_content, err := decrypt_tink(f.Response.Body)
+		if err != nil {
+			fmt.Println("Unable to decrypt response body:", err)
+			log.Fatal(err)
+		}
+		
+		fmt.Println(original_content)
+		fmt.Println(len(original_content))
+		f.Response.Body = original_content
+		content_length := len(f.Response.Body)
+		content_length_str := strconv.Itoa(len(f.Response.Body))
+
+		// Update content length headers with new length of decrypted data
+		f.Response.Header.Set("X-Goog-Stored-Content-Length",
+			content_length_str)
+		
+		f.Response.Header.Set("Content-Length",
+			content_length_str)
+
+		// gcloud storage cp command uses "range" in request
+        range_value := "bytes 0-"+strconv.Itoa(content_length-1)+"/"+content_length_str
+
+		f.Request.Header.Set("range",
+			range_value)
+
+		f.Response.Header.Set("Content-Range",
+			range_value)
+	   
+		hash_value := base64_md5hash(original_content)
+		f.Response.Header.Set("X-Goog-Hash",
+			hash_value)
+
 	}
 }
