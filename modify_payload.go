@@ -127,13 +127,14 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 			content_length_str)
 
 		// gcloud storage cp command uses "range" in request
-        range_value := "bytes 0-"+strconv.Itoa(content_length-1)+"/"+content_length_str
+        range_value_resp := "bytes 0-"+strconv.Itoa(content_length-1)+"/"+content_length_str
+		range_value_req:= "bytes=0-"+strconv.Itoa(content_length-1)
 
 		f.Request.Header.Set("range",
-			range_value)
+			range_value_req)
 
 		f.Response.Header.Set("Content-Range",
-			range_value)
+			range_value_resp)
 	   
 		hash_value := base64_md5hash(original_content)
 		f.Response.Header.Set("X-Goog-Hash",
