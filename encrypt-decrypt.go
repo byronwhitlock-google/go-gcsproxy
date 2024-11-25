@@ -28,11 +28,9 @@ func base64_md5hash(byteStream []byte) string {
 	return base64MD5Hash
 }
 
-// encryptBytes checks if a keyset handle exists in Google Cloud KMS,
-// creates one if it doesn't, and uses it to encrypt bytes
 func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
-	//projects/ymail-central-logsink-0357/locations/global/keyRings/gcsproxy-test/cryptoKeys/gcsproxy-test-ring/cryptoKeyVersions/1
+	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
 	// Create a KMS client
@@ -57,8 +55,6 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 	return encryptedBytes, nil
 }
 
-// encryptBytes checks if a keyset handle exists in Google Cloud KMS,
-// creates one if it doesn't, and uses it to encrypt bytes
 func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
