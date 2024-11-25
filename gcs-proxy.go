@@ -50,17 +50,25 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 			log.Error(err)
 			return
 		}
+		break
+
+	case singlePartUpload:
+		break
 	}
 }
 
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
-
-	if InterceptGcsMethod(f) == multiPartUpload {
+	switch m := InterceptGcsMethod(f); m {
+	case multiPartUpload:
 		// Parse the multipart request.
 		err := HandleMultipartResponse(f)
 		if err != nil {
 			log.Error(err)
 			return
 		}
+		break
+
+	case singlePartUpload:
+		break
 	}
 }
