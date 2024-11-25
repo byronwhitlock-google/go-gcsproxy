@@ -42,22 +42,22 @@ func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) 
 	bodyReader := strings.NewReader(string(f.Request.Body))
 
 	multipartReader := multipart.NewReader(bodyReader, boundary)
-	encrypted_request := &bytes.Buffer{}
-	unencrypted_file_content := &bytes.Buffer{}
+	encryptedRequest := &bytes.Buffer{} //
+	unencryptedFileContent := &bytes.Buffer{}
 
 	// Creates a new multipart Writer with a random boundary, writing to the empty
 	// buffer
-	multipartWriter := multipart.NewWriter(encrypted_request)
+	multipartWriter := multipart.NewWriter(encryptedRequest)
 
 	err := multipartWriter.SetBoundary(boundary)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, fmt.Errorf("failed to set boundry in multipart-request: %v", err)
 	}
 
 	//Grab the first part. this contains the json metadata for the GCS request object
 	part, err := multipartReader.NextPart()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) //TODO change this to return error value
 	}
 
 	// Create the first part
@@ -67,20 +67,20 @@ func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) 
 	fmt.Println(mimeHeader)
 	writer_part, err := multipartWriter.CreatePart(mimeHeader)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, fmt.Errorf("failed to create new part in multipart-request: %v", err)
 	}
 
 	// Grab the actual JSON
 	gcsObjectMetadataJson, err := io.ReadAll(part)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, fmt.Errorf("failed to json parse gcs object metadata: %v", err)
 	}
 
 	// unmarshall the json contents of the first part.
 	var gcsObjectMetadataMap map[string]interface{}
 	err = json.Unmarshal(gcsObjectMetadataJson, &gcsObjectMetadataMap)
 	if err != nil {
-		log.Fatalf("Error unmarshalling gcsObjectMetadata: %v", err)
+		return nil, nil, fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
 	}
 	fmt.Println(gcsObjectMetadataMap)
 
@@ -92,14 +92,14 @@ func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) 
 	// Now write the gcs object metadata back to the multipart writer
 	jsonData, err := json.Marshal(gcsObjectMetadataMap)
 	if err != nil {
-		fmt.Println("Error marshaling to JSON:", err)
+		return nil, nil, fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
 	}
 	writer_part.Write(jsonData)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, fmt.Errorf("error reading  multipart request: %v", err)
 	}
 	// Create the second part
 	// the content-type here will always be  application/octet stream because we are storing encrypted
@@ -107,29 +107,32 @@ func ParseMultipartRequest(f *proxy.Flow) (*bytes.Buffer, *bytes.Buffer, error) 
 	///    writer_part, err = writer.CreatePart(GetMultipartMimeHeaderOctetStream())
 	writer_part, err = multipartWriter.CreatePart(GetMultipartMimeHeader(part))
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, fmt.Errorf("error creating  multipart request: %v", err)
 	}
 
 	// Get file contents
 	if part.FileName() == "" {
 		rawBytes, err := io.ReadAll(part)
-		unencrypted_file_content = bytes.NewBuffer(rawBytes)
+		unencryptedFileContent = bytes.NewBuffer(rawBytes)
 
 		if err != nil {
-			log.Fatal(err)
+			return nil, nil, fmt.Errorf("error reading  multipart request: %v", err)
 		}
 
 		// Encrypt the intercepted file
-		encrypted_data, err := encrypt_tink(unencrypted_file_content.Bytes())
+		encryptedData, err := encryptBytes(f.Request.Raw().Context(),
+			config.KmsResourceName,
+			unencryptedFileContent.Bytes())
+
 		if err != nil {
-			log.Fatal(err)
+			return nil, nil, fmt.Errorf("error encrypting  request: %v", err)
 		}
 
 		// write the final encrypted part
-		writer_part.Write(encrypted_data)
+		writer_part.Write(encryptedData)
 	}
 	multipartWriter.Close()
 
-	return encrypted_request, unencrypted_file_content, nil
+	return encryptedRequest, unencryptedFileContent, nil
 
 }
