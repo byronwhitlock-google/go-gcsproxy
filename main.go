@@ -120,7 +120,7 @@ func loadConfig() *Config {
 	flag.BoolVar(&config.SslInsecure, "ssl_insecure", true, "not verify upstream server SSL/TLS certificates.")
 	flag.Var((*arrayValue)(&config.IgnoreHosts), "ignore_hosts", "a list of ignore hosts")
 	flag.Var((*arrayValue)(&config.AllowHosts), "allow_hosts", "a list of allow hosts")
-	flag.StringVar(&config.CertPath, "cert_path", "/Users/byronwhitlock/certs", "path of generate cert files")
+	flag.StringVar(&config.CertPath, "cert_path", "/Users/byronwhitlock/certs", "path to generated cert files")
 	flag.IntVar(&config.Debug, "debug", 2, "debug mode: 1 - print debug log, 2 - show debug from")
 	flag.StringVar(&config.Dump, "dump", "", "dump filename")
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")

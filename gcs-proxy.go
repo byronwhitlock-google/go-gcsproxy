@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -44,54 +42,25 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
-	if InterceptGcsMethod(f) == multiPartUpload {
-
+	switch m := InterceptGcsMethod(f); m {
+	case multiPartUpload:
 		// Parse the multipart request.
-		// TODO Fix this mess of string parsing and use the native stream
-		// TODO untangle parse multipart request from CreateMultipart request. We need to do this so we can unconditionally rewrite single part uploads to multipart in order to add extra gcs object metadata
-		encryptedRequest, unencryptedFileContent, err := ParseMultipartRequest(f)
+		err := HandleMultipartRequest(f)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		fmt.Println(unencryptedFileContent)
-		fmt.Println(encryptedRequest)
-
-		f.Request.Header.Set("gcs-proxy-original-content-length",
-			string(len(f.Request.Body)))
-
-		f.Request.Body = encryptedRequest.Bytes()
-
-		f.Request.Header.Set("gcs-proxy-original-md5-hash",
-			base64_md5hash(unencryptedFileContent.Bytes()))
 	}
 }
 
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	if InterceptGcsMethod(f) == multiPartUpload {
-		fmt.Println("Multipart")
-
-		var jsonResponse map[string]string
-		// turn the response body into a dynamic json map we can use
-		err := json.Unmarshal(f.Response.Body, &jsonResponse)
+		// Parse the multipart request.
+		err := HandleMultipartResponse(f)
 		if err != nil {
-			log.Fatalf("Error unmarshalling JSON: %v", err)
+			log.Error(err)
+			return
 		}
-		fmt.Println(jsonResponse)
-
-		// update the response with the orginal md5 hash so gsutil/gcloud does not complain
-		jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
-
-		jsonData, err := json.Marshal(jsonResponse)
-		if err != nil {
-			fmt.Println("Error marshaling to JSON:", err)
-		}
-
-		//fmt.Println(jsonData)
-		f.Response.Body = jsonData
-
-		// recalculate content length
-		f.Response.ReplaceToDecodedBody()
 	}
 }
