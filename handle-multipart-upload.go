@@ -51,13 +51,13 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	err := multipartWriter.SetBoundary(boundary)
 	if err != nil {
-		return fmt.Errorf("failed to set boundry in multipart-request: %v", err)
+		return fmt.Errorf("failed to set boundary in multipart-request: %v", err)
 	}
 
 	//Grab the first part. this contains the json metadata for the GCS request object
 	part, err := multipartReader.NextPart()
 	if err != nil {
-		log.Fatal(err) //TODO change this to return error value
+		return fmt.Errorf("failed to read next part in multipart-request: %v", err)
 	}
 
 	// Create the first part

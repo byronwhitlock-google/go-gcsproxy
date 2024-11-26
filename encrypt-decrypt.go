@@ -28,6 +28,8 @@ func base64_md5hash(byteStream []byte) string {
 	return base64MD5Hash
 }
 
+// Encrypt bytes with KMS key referenced by resourceName in the format:
+// projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
@@ -55,6 +57,8 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 	return encryptedBytes, nil
 }
 
+// Decrypts bytes with using KMS key referenced by resourceName in the format:
+// projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)

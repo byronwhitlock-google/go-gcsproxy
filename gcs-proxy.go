@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -20,21 +21,33 @@ type gcsMethod int
 const (
 	multiPartUpload   gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
 	singlePartUpload                   // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
-	resumableUpload                    // uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
-	simpleDownload                     // VERB=GET, uri=/.... TODO
+	resumableUpload                    // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
+	simpleDownload                     // VERB=GET, uri=/download
 	streamingDownload                  // unsupported
 	passThru                           // all other requests
 )
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
-	if f.Request.URL.Host == "storage.googleapis.com" &&
-		strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") &&
-		f.Request.Method == "POST" {
-		if f.Request.URL.Query().Get("uploadType") == "multipart" {
-			return multiPartUpload
+	if f.Request.URL.Host == "storage.googleapis.com" {
+		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
+			if f.Request.Method == "POST" {
+				if f.Request.URL.Query().Get("uploadType") == "multipart" {
+					return multiPartUpload
+				}
+				if f.Request.URL.Query().Get("uploadType") == "media" {
+					return singlePartUpload
+				}
+				if f.Request.URL.Query().Get("uploadType") == "resumable" {
+					return resumableUpload
+				}
+			}
 		}
-		if f.Request.URL.Query().Get("uploadType") == "media" {
-			return singlePartUpload
+
+		if strings.HasPrefix(f.Request.URL.Path, "/download") {
+			if f.Request.Method == "GET" {
+				return simpleDownload
+
+			}
 		}
 	}
 	return passThru
@@ -42,33 +55,54 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
+	var err error
+
+out:
 	switch m := InterceptGcsMethod(f); m {
+
 	case multiPartUpload:
 		// Parse the multipart request.
-		err := HandleMultipartRequest(f)
-		if err != nil {
-			log.Error(err)
-			return
+		err = HandleMultipartRequest(f)
+		break out
+
+	case simpleDownload:
+		if f.Response != nil && f.Response.StatusCode == 404 {
+			err = fmt.Errorf("404 detected '%v'", f.Request.Body)
 		}
-		break
+		//rangeReq := "bytes=0-" + strconv.Itoa(int(f.Request.Raw().ContentLength-1)) // breaks at file sizes bigger than 4GB
+		//f.Request.Header.Set("range", rangeReq)
+		break out
 
 	case singlePartUpload:
-		break
+		break out
+	}
+
+	if err != nil {
+		log.Error(err)
+		return
 	}
 }
 
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
+
+	var err error
+
+out:
 	switch m := InterceptGcsMethod(f); m {
+
 	case multiPartUpload:
-		// Parse the multipart request.
-		err := HandleMultipartResponse(f)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		break
+		err = HandleMultipartResponse(f)
+		break out
+
+	case simpleDownload:
+		err = HandleSimpleDownloadResponse(f)
+		break out
 
 	case singlePartUpload:
-		break
+		break out
+	}
+	if err != nil {
+		log.Error(err)
+		return
 	}
 }
