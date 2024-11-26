@@ -1,3 +1,5 @@
+pytest
 google-cloud-kms
 tink==1.10.0
-axlearn
+# copy it from ajax
+axlearn[core] @git+https://github.com/apple/axlearn.git@1af2ba8714a0a88aaf839841291b12f87e132eb4

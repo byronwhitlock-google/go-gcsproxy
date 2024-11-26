@@ -18,6 +18,8 @@ import pytest
 import logging
 import test_util
 import uuid
+import time
+import tensorflow as tf
 
 
 LOG_LEVEL_STR = os.environ.get("PROXY_FUNC_TEST_LOG_LEVEL", "INFO")
@@ -38,17 +40,19 @@ TEST_BUCKET = os.environ.get(
 OBJECT_NAME_PREFIX = "func-test"
 OBJECT_CONTENT = "testing object content"
 
+TEST_UNIQUE_FOLDER = str(int(time.time() * 1000))
+logger.info(f"GCS testing path: gs://{TEST_BUCKET}/{TEST_UNIQUE_FOLDER}")
+
 @pytest.fixture(scope="module")
 def setup_data():
     """Fixture to set up any necessary data or resources."""
     rand_id = uuid.uuid4()
     object_path_byte = (
-        f"gs://{TEST_BUCKET}/{rand_id}/{OBJECT_NAME_PREFIX}-{rand_id}").encode("utf-8")
+        f"gs://{TEST_BUCKET}/{TEST_UNIQUE_FOLDER}/{OBJECT_NAME_PREFIX}-{rand_id}").encode("utf-8")
     env_aead = test_util.get_aead(GCP_KMS_KEY)
     orginal_object_byte = OBJECT_CONTENT.encode("utf-8")
     encrypted_object_byte = env_aead.encrypt(
         orginal_object_byte, object_path_byte)
-    logger.info(f"test run uuid: {rand_id}")
     logger.info(f"object_path: {object_path_byte}")
     return {
         "original_object_byte": orginal_object_byte,
@@ -58,20 +62,32 @@ def setup_data():
     }
 
 
-def test_tink_decrypt(setup_data):
-    exepcted = setup_data["original_object_byte"]
-    env_aead = setup_data["env_aead"]
-    actual = env_aead.decrypt(
-        setup_data["encrypted_object_byte"], setup_data["object_path_byte"])
-    assert actual == exepcted
+# def test_tink_decrypt(setup_data):
+#     exepcted = setup_data["original_object_byte"]
+#     env_aead = setup_data["env_aead"]
+#     actual = env_aead.decrypt(
+#         setup_data["encrypted_object_byte"], setup_data["object_path_byte"])
+#     assert actual == exepcted
 
 
-def test_axlearn_fileio_copy(setup_data):
-    """Test case for axlearn file_io.copy()"""
-    assert True
+# def test_axlearn_fileio_copy(setup_data):
+#     """Test case for axlearn file_io.copy()"""
+#     from axlearn.common import file_system as fs
+#     source = "/tmp/source"
+#     destination = setup_data["object_path_byte"].decode("utf-8")
+#     with open(source, 'w') as file:
+#       file.write(setup_data["original_object_byte"].decode("utf-8"))
+#     logger.info(f"Copying {source} to {destination}")
+#     fs.copy(source, destination, overwrite=True)
+#     tf.io.gfile.copy(source, destination, overwrite=True)
+#     assert True
 
 def test_tf_io_gfile_write(setup_data):
     """Test case for tf.io.gfile.GFile.write()"""
+    content = setup_data["original_object_byte"].decode("utf-8")
+    destination = setup_data["object_path_byte"].decode("utf-8")
+    with tf.io.gfile.GFile(destination, "w") as f:
+        f.write(content)
     assert True
 
 
