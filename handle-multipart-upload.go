@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/textproto"
 	"strings"
+	"strconv"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
@@ -175,4 +176,46 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 	// recalculate content length
 	f.Response.ReplaceToDecodedBody()
 	return nil
+}
+
+func HandleSimpleDownloadResponse(f *proxy.Flow) error {
+		fmt.Println("simpleDownload")
+
+		// Update the response content with the decrypted content
+		original_content, err := encryptBytes(f.Request.Raw().Context(),
+			config.KmsResourceName,f.Response.Body)
+		if err != nil {
+			fmt.Println("Unable to decrypt response body:", err)
+			log.Fatal(err)
+		}
+		
+		fmt.Println(original_content)
+		fmt.Println(len(original_content))
+		f.Response.Body = original_content
+		content_length := len(f.Response.Body)
+		content_length_str := strconv.Itoa(len(f.Response.Body))
+
+		// Update content length headers with new length of decrypted data
+		f.Response.Header.Set("X-Goog-Stored-Content-Length",
+			content_length_str)
+		
+		f.Response.Header.Set("Content-Length",
+			content_length_str)
+
+		// gcloud storage cp command uses "range" in request
+        range_value_resp := "bytes 0-"+strconv.Itoa(content_length-1)+"/"+content_length_str
+		range_value_req:= "bytes=0-"+strconv.Itoa(content_length-1)
+
+		f.Request.Header.Set("range",
+			range_value_req)
+
+		f.Response.Header.Set("Content-Range",
+			range_value_resp)
+	   
+		hash_value := base64_md5hash(original_content)
+		f.Response.Header.Set("X-Goog-Hash",
+			hash_value)
+		
+		return nil
+
 }

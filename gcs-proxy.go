@@ -37,6 +37,11 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 			return singlePartUpload
 		}
 	}
+	if f.Request.URL.Host == "storage.googleapis.com" && 
+		strings.HasPrefix(f.Request.URL.Path, "/download") &&
+		f.Request.Method == "GET" {
+			return simpleDownload
+		}
 	return passThru
 }
 
@@ -69,6 +74,13 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 		break
 
 	case singlePartUpload:
+		break
+	case simpleDownload:
+		err := HandleSimpleDownloadResponse(f)
+		if err != nil {
+			log.Error(err)
+			return
+		}
 		break
 	}
 }
