@@ -182,7 +182,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 		fmt.Println("simpleDownload")
 
 		// Update the response content with the decrypted content
-		original_content, err := encryptBytes(f.Request.Raw().Context(),
+		original_content, err := decryptBytes(f.Request.Raw().Context(),
 			config.KmsResourceName,f.Response.Body)
 		if err != nil {
 			fmt.Println("Unable to decrypt response body:", err)
