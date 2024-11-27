@@ -9,20 +9,20 @@ import (
 )
 
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
-	fmt.Println("simpleDownload")
+	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
 
 	// Update the response content with the decrypted content
 	unencryptedBytes, err := decryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName, f.Response.Body)
 	if err != nil {
-		fmt.Println("Unable to decrypt response body:", err)
-		log.Fatal(err)
+		return fmt.Errorf("unable to decrypt response body:", err)
+
 	}
 
 	fmt.Println(unencryptedBytes)
 	fmt.Println(len(unencryptedBytes))
 	f.Response.Body = unencryptedBytes
-	contentLength := len(f.Response.Body)
+	contentLength := len(unencryptedBytes)
 
 	// Update content length headers with new length of decrypted data
 	f.Response.Header.Set("X-Goog-Stored-Content-Length", strconv.Itoa(contentLength))

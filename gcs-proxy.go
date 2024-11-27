@@ -24,7 +24,9 @@ const (
 	resumableUpload                    // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
 	simpleDownload                     // VERB=GET, uri=/download
 	streamingDownload                  // unsupported
-	passThru                           // all other requests
+	metadataRequest
+	passThru // all other requests
+
 )
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
@@ -44,9 +46,16 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 		}
 
 		if strings.HasPrefix(f.Request.URL.Path, "/download") {
-			if f.Request.Method == "GET" {
-				return simpleDownload
+			//if f.Request.Method == "GET" {
+			return simpleDownload
+			//}
+		}
 
+		if strings.HasPrefix(f.Request.URL.Path, "/storage/v1/b/") {
+			if f.Request.Method == "GET" {
+				if f.Request.URL.Query().Get("alt") == "json" {
+					return metadataRequest
+				}
 			}
 		}
 	}
@@ -55,6 +64,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
+	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
 	var err error
 
 out:
@@ -69,14 +79,15 @@ out:
 		if f.Response != nil && f.Response.StatusCode == 404 {
 			err = fmt.Errorf("404 detected '%v'", f.Request.Body)
 		}
-		//rangeReq := "bytes=0-" + strconv.Itoa(int(f.Request.Raw().ContentLength-1)) // breaks at file sizes bigger than 4GB
-		//f.Request.Header.Set("range", rangeReq)
 		break out
 
 	case singlePartUpload:
 		break out
-	}
 
+	case metadataRequest:
+		HandleMetadataRequest(f)
+		break out
+	}
 	if err != nil {
 		log.Error(err)
 		return
@@ -87,6 +98,9 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	var err error
 
+	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
+		log.Error(fmt.Errorf("got invalid response code! '%v'......\n\n%s", f.Response.StatusCode, f.Response.Body))
+	}
 out:
 	switch m := InterceptGcsMethod(f); m {
 
@@ -100,9 +114,16 @@ out:
 
 	case singlePartUpload:
 		break out
+
+	case metadataRequest:
+		HandleMetadataResponse(f)
+		break out
 	}
 	if err != nil {
 		log.Error(err)
 		return
 	}
+
+	// recalculate content length
+	f.Response.ReplaceToDecodedBody()
 }

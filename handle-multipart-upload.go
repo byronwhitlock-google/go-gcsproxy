@@ -76,40 +76,29 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		return fmt.Errorf("failed to json parse gcs object metadata: %v", err)
 	}
 
+	// TODO: pull in the gcs sdk so we have an up to date proto
+	var gcsMetadata interface{}
 	// unmarshall the json contents of the first part.
-	var gcsObjectMetadataMap map[string]interface{}
-	err = json.Unmarshal(gcsObjectMetadataJson, &gcsObjectMetadataMap)
+	err = json.Unmarshal(gcsObjectMetadataJson, &gcsMetadata)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
 	}
-	fmt.Println(gcsObjectMetadataMap)
 
-	// store some extra metadata in GCS to help us on later requests
-	//gcsObjectMetadataMap["x-unencrypted-content-length"] = string(len(f.Request.Body))
-	//gcsObjectMetadataMap["x-md5Hash"] = ""
-	//gcsObjectMetadataMap["x-tink-encryption"] = "1"
-
-	// Now write the gcs object metadata back to the multipart writer
-	jsonData, err := json.Marshal(gcsObjectMetadataMap)
-	if err != nil {
-		return fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
+	gcsMetadataMap, ok := gcsMetadata.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("error: JSON data is not a map")
 	}
-	writer_part.Write(jsonData)
+	if gcsMetadataMap["metadata"] == nil {
+		gcsMetadataMap["metadata"] = make(map[string]interface{})
+	}
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
 	if err != nil {
 		return fmt.Errorf("error reading  multipart request: %v", err)
 	}
-	// Create the second part
-	// the content-type here will always be  application/octet stream because we are storing encrypted
-	// TODO ask eric about this, because we have to use the correct mime type or we get an error....
-	///    writer_part, err = writer.CreatePart(GetMultipartMimeHeaderOctetStream())
-	writer_part, err = multipartWriter.CreatePart(GetMultipartMimeHeader(part))
-	if err != nil {
-		return fmt.Errorf("error creating  multipart request: %v", err)
-	}
 
+	var encryptedData []byte
 	// Get file contents
 	if part.FileName() == "" {
 		rawBytes, err := io.ReadAll(part)
@@ -120,7 +109,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
-		encryptedData, err := encryptBytes(f.Request.Raw().Context(),
+		encryptedData, err = encryptBytes(f.Request.Raw().Context(),
 			config.KmsResourceName,
 			unencryptedFileContent.Bytes())
 
@@ -128,12 +117,50 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 			return fmt.Errorf("error encrypting  request: %v", err)
 		}
 
-		// write the final encrypted part
-		writer_part.Write(encryptedData)
 	}
+	///
+	///
+	/// Create multipart request
+	///
+	///
+	// TODO move this into its own method
+	// Access and modify the nested value dynamically
+	customMetadata, ok := gcsMetadataMap["metadata"].(map[string]interface{})
+	if ok {
+
+		customMetadata["x-unencrypted-content-length"] = len(unencryptedFileContent.String())
+		customMetadata["x-md5Hash"] = base64_md5hash(unencryptedFileContent.Bytes())
+	}
+
+	fmt.Println(string(gcsObjectMetadataJson))
+	fmt.Println(gcsMetadata)
+	log.Debug(fmt.Errorf("got metadata: %s", gcsObjectMetadataJson))
+
+	// Now write the gcs object metadata back to the multipart writer
+	newGcsMetadataJson, err := json.Marshal(gcsMetadata)
+
+	if err != nil {
+		return fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
+	}
+	log.Debug(fmt.Errorf("rewrote json data to: %s", newGcsMetadataJson))
+
+	writer_part.Write(newGcsMetadataJson)
+
+	// Create the second part
+	// the content-type here will always be  application/octet stream because we are storing encrypted
+	// TODO ask eric about this, because we have to use the correct mime type or we get an error....
+	///    writer_part, err = writer.CreatePart(GetMultipartMimeHeaderOctetStream())
+	writer_part, err = multipartWriter.CreatePart(GetMultipartMimeHeader(part))
+	if err != nil {
+		return fmt.Errorf("error creating  multipart request: %v", err)
+	}
+
+	// write the final encrypted part
+	writer_part.Write(encryptedData)
+
 	multipartWriter.Close()
 
-	// Save the orginal content length for rewriting when download.
+	// Save the original content length for rewriting when download.
 	f.Request.Header.Set("gcs-proxy-original-content-length",
 		string(len(f.Request.Body)))
 
@@ -171,8 +198,5 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 
 	//fmt.Println(jsonData)
 	f.Response.Body = jsonData
-
-	// recalculate content length
-	f.Response.ReplaceToDecodedBody()
 	return nil
 }
