@@ -9,14 +9,20 @@ import (
 )
 
 func HandleMetadataRequest(f *proxy.Flow) error {
+
+	log.Debug(fmt.Sprintf("got query string  %s", f.Request.URL.RawQuery))
+
 	queryString := f.Request.URL.Query()
-	fields := queryString.Get("fields")
-	fields += ",metadata"
-	queryString.Set("fields", fields)
 
-	//queryString.Del("fields")
+	/*
+		// Append field 'custom metadata' to be returned.
+		fields := queryString.Get("fields")
+		fields += ",metadata"
+		queryString.Set("fields", fields)
+	*/
 
-	log.Debug(fmt.Sprintf("got query string to %s", f.Request.URL.RawQuery))
+	// we delete all fields because there is no way to reliable filter without getting 'Invalid field selection metadata' on new objects
+	queryString.Del("fields")
 	f.Request.URL.RawQuery = queryString.Encode()
 
 	log.Debug(fmt.Sprintf("formatted query string to %s", f.Request.URL.RawQuery))

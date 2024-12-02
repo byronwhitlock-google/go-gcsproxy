@@ -10,7 +10,7 @@ import (
 )
 
 func HandleSimpleDownloadRequest(f *proxy.Flow) error {
-	// update request to ask for actual size, not whatever size was passed iun.
+	// update request grab the whole file.
 	// strip range header, we don't support partial uploads at all.
 	f.Request.Header.Del("range")
 	return nil
