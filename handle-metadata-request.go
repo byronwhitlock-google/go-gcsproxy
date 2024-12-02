@@ -11,10 +11,10 @@ import (
 func HandleMetadataRequest(f *proxy.Flow) error {
 	queryString := f.Request.URL.Query()
 	fields := queryString.Get("fields")
-	fields += ",x-unencrypted-content-length,metadata.x-md5Hash"
+	fields += ",metadata"
 	queryString.Set("fields", fields)
 
-	queryString.Del("fields")
+	//queryString.Del("fields")
 
 	log.Debug(fmt.Sprintf("got query string to %s", f.Request.URL.RawQuery))
 	f.Request.URL.RawQuery = queryString.Encode()
@@ -33,11 +33,15 @@ func HandleMetadataResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
 	}
+
 	customMetadata, ok := gcsMetadataMap["metadata"].(map[string]interface{})
 	if ok {
 		// overwrite the size & hash parameter with the unencrypted size & hash
 		gcsMetadataMap["size"] = customMetadata["x-unencrypted-content-length"]
 		gcsMetadataMap["md5Hash"] = customMetadata["x-md5Hash"]
+
+	} else {
+		return fmt.Errorf("unable to parse gcs metadata")
 	}
 	// Now write the gcs object metadata back to the multipart writer
 	jsonData, err := json.MarshalIndent(gcsMetadataMap, "", "\t")

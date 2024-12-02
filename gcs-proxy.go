@@ -76,9 +76,7 @@ out:
 		break out
 
 	case simpleDownload:
-		if f.Response != nil && f.Response.StatusCode == 404 {
-			err = fmt.Errorf("404 detected '%v'", f.Request.Body)
-		}
+		HandleSimpleDownloadRequest(f)
 		break out
 
 	case singlePartUpload:

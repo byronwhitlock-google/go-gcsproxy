@@ -163,7 +163,10 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// Save the original content length for rewriting when download.
 	f.Request.Header.Set("gcs-proxy-original-content-length",
-		string(len(f.Request.Body)))
+		f.Request.Header.Get("Content-Length"))
+
+	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
+		strconv.Itoa(unencryptedFileContent.Len()))
 
 	log.Debug(unencryptedFileContent)
 	log.Debug(encryptedRequest)
@@ -191,7 +194,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
-	jsonResponse["size"], err = strconv.Atoi(f.Request.Header.Get("gcs-proxy-original-content-length"))
+	jsonResponse["size"], err = strconv.Atoi(f.Request.Header.Get("gcs-proxy-unencrypted-file-size"))
 	if err != nil {
 		return fmt.Errorf("error setting json response: %v", err)
 	}
