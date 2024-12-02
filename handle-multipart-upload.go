@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/textproto"
+	"strconv"
 	"strings"
 
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -180,7 +181,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 func HandleMultipartResponse(f *proxy.Flow) error {
 	log.Debug("in HandleMultipartResponse")
 
-	var jsonResponse map[string]string
+	var jsonResponse map[string]interface{}
 	// turn the response body into a dynamic json map we can use
 	err := json.Unmarshal(f.Response.Body, &jsonResponse)
 	if err != nil {
@@ -190,6 +191,10 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
+	jsonResponse["size"], err = strconv.Atoi(f.Request.Header.Get("gcs-proxy-original-content-length"))
+	if err != nil {
+		return fmt.Errorf("error setting json response: %v", err)
+	}
 
 	jsonData, err := json.Marshal(jsonResponse)
 	if err != nil {
