@@ -21,7 +21,7 @@ func HandleMetadataRequest(f *proxy.Flow) error {
 		queryString.Set("fields", fields)
 	*/
 
-	// we delete all fields because there is no way to reliable filter without getting 'Invalid field selection metadata' on new objects
+	// we delete all fields because there is no way to reliable filter without getting  on new  on new objects
 	queryString.Del("fields")
 	f.Request.URL.RawQuery = queryString.Encode()
 
