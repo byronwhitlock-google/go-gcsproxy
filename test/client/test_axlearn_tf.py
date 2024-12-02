@@ -7,7 +7,11 @@ Setup:
    -- PROXY_FUNC_TEST_BUCKET: GCS bucket for testing. Optional
    -- https_proxy: Point to the proxy. Required
                    ie. https_proxy=https://localhost:8080
-   -- REQUESTS_CA_BUNDLE: Point to the proxy ca cert. Requred
+   -- REQUESTS_CA_BUNDLE: Point to the proxy ca cert. Required
+         For tesnflow(tf.io, tf.data), you'd need to add the ca cert to system store. 
+         Linux: use update-ca-certficates
+         (https://manpages.ubuntu.com/manpages/xenial/man8/update-ca-certificates.8.html)
+         Mac: Keychain Access -> Certificates
 
 Usage:
   >>> pytest -v -s --log-cli-level=INFO test_axlearn_tf.py
@@ -16,10 +20,10 @@ Usage:
 import os
 import pytest
 import logging
-import test_util
 import uuid
 import time
 import tensorflow as tf
+
 
 
 LOG_LEVEL_STR = os.environ.get("PROXY_FUNC_TEST_LOG_LEVEL", "INFO")
@@ -49,25 +53,12 @@ def setup_data():
     rand_id = uuid.uuid4()
     object_path_byte = (
         f"gs://{TEST_BUCKET}/{TEST_UNIQUE_FOLDER}/{OBJECT_NAME_PREFIX}-{rand_id}").encode("utf-8")
-    env_aead = test_util.get_aead(GCP_KMS_KEY)
     orginal_object_byte = OBJECT_CONTENT.encode("utf-8")
-    encrypted_object_byte = env_aead.encrypt(
-        orginal_object_byte, object_path_byte)
     logger.info(f"object_path: {object_path_byte}")
     return {
         "original_object_byte": orginal_object_byte,
-        "encrypted_object_byte": encrypted_object_byte,
-        "env_aead": env_aead,
         "object_path_byte": object_path_byte
     }
-
-
-# def test_tink_decrypt(setup_data):
-#     exepcted = setup_data["original_object_byte"]
-#     env_aead = setup_data["env_aead"]
-#     actual = env_aead.decrypt(
-#         setup_data["encrypted_object_byte"], setup_data["object_path_byte"])
-#     assert actual == exepcted
 
 
 # def test_axlearn_fileio_copy(setup_data):
@@ -89,6 +80,8 @@ def test_tf_io_gfile_write(setup_data):
     with tf.io.gfile.GFile(destination, "w") as f:
         f.write(content)
     assert True
+        
+
 
 
 def test_tf_io_gfile_read(setup_data):
