@@ -114,18 +114,43 @@ func main() {
 func loadConfig() *Config {
 	config := new(Config)
 
+	defaultSslInsecure := true
+	defaultCertPath := "/proxy/certs"
+	defaultDebug := 0
+	defaultKmsResourceName := "projects/ymail-central-logsink-0357/locations/global/keyRings/gcsproxy-test/cryptoKeys/gcsproxy-test-ring"
+
+	sslInsecure, sslInsecureOk := getBoolEnvVar("SSL_INSECURE")
+	if sslInsecureOk {
+		defaultSslInsecure = sslInsecure
+	}
+
+	certPath, certPathOk := getStringEnvVar("PROXY_CERT_PATH")
+	if certPathOk {
+		defaultCertPath = certPath
+	}
+
+	debug, debugOk := getIntEnvVar("DEBUG_LEVEL")
+	if debugOk {
+		defaultDebug = debug
+	}
+
+	kmsResourseName, kmsResourceNameOk := getStringEnvVar("GCP_KMS_RESOURCE_NAME")
+	if kmsResourceNameOk {
+		defaultKmsResourceName = kmsResourseName
+	}
+
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "addr", ":9080", "proxy listen addr")
 	flag.StringVar(&config.WebAddr, "web_addr", ":9081", "web interface listen addr")
-	flag.BoolVar(&config.SslInsecure, "ssl_insecure", true, "not verify upstream server SSL/TLS certificates.")
+	flag.BoolVar(&config.SslInsecure, "ssl_insecure", defaultSslInsecure, "not verify upstream server SSL/TLS certificates.")
 	flag.Var((*arrayValue)(&config.IgnoreHosts), "ignore_hosts", "a list of ignore hosts")
 	flag.Var((*arrayValue)(&config.AllowHosts), "allow_hosts", "a list of allow hosts")
-	flag.StringVar(&config.CertPath, "cert_path", "/Users/byronwhitlock/certs", "path to generated cert files")
-	flag.IntVar(&config.Debug, "debug", 2, "debug mode: 1 - print debug log, 2 - show debug from")
+	flag.StringVar(&config.CertPath, "cert_path", defaultCertPath, "path to generated cert files")
+	flag.IntVar(&config.Debug, "debug", defaultDebug, "debug mode: 1 - print debug log, 2 - show debug from")
 	flag.StringVar(&config.Dump, "dump", "", "dump filename")
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
-	flag.StringVar(&config.KmsResourceName, "kms_project", "projects/ymail-central-logsink-0357/locations/global/keyRings/gcsproxy-test/cryptoKeys/gcsproxy-test-ring", "Payload will be encrypted with keys stored in KMS ")
+	flag.StringVar(&config.KmsResourceName, "kms_project", defaultKmsResourceName, "Payload will be encrypted with keys stored in KMS ")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
