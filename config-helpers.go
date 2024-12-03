@@ -5,26 +5,29 @@ import (
 	"strconv"
 )
 
-func getStringEnvVar(key string) (string, bool) {
+func setStringEnvVar(key string, defValue *string) int {
 	envVar := os.Getenv(key)
 	if len(envVar) == 0 {
-		return "", false
+		return 0
 	}
-	return envVar, true
+	*defValue = envVar
+	return 0
 }
 
-func getBoolEnvVar(key string) (bool, bool) {
+func setBoolEnvVar(key string, defValue *bool) int {
 	envVar, boolError := strconv.ParseBool(os.Getenv(key))
 	if boolError == nil {
-		return envVar, true
+		*defValue = envVar
+		return 0
 	}
-	return false, false
+	return 0
 }
 
-func getIntEnvVar(key string) (int, bool) {
+func setIntEnvVar(key string, defValue *int) int {
 	envVar, intError := strconv.Atoi(os.Getenv(key))
 	if intError == nil {
-		return envVar, true
+		*defValue = envVar
+		return 0
 	}
-	return 0, false
+	return 0
 }

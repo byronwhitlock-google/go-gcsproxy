@@ -119,25 +119,10 @@ func loadConfig() *Config {
 	defaultDebug := 0
 	defaultKmsResourceName := "projects/ymail-central-logsink-0357/locations/global/keyRings/gcsproxy-test/cryptoKeys/gcsproxy-test-ring"
 
-	sslInsecure, sslInsecureOk := getBoolEnvVar("SSL_INSECURE")
-	if sslInsecureOk {
-		defaultSslInsecure = sslInsecure
-	}
-
-	certPath, certPathOk := getStringEnvVar("PROXY_CERT_PATH")
-	if certPathOk {
-		defaultCertPath = certPath
-	}
-
-	debug, debugOk := getIntEnvVar("DEBUG_LEVEL")
-	if debugOk {
-		defaultDebug = debug
-	}
-
-	kmsResourseName, kmsResourceNameOk := getStringEnvVar("GCP_KMS_RESOURCE_NAME")
-	if kmsResourceNameOk {
-		defaultKmsResourceName = kmsResourseName
-	}
+	setBoolEnvVar("SSL_INSECURE", &defaultSslInsecure)
+	setStringEnvVar("PROXY_CERT_PATH", &defaultCertPath)
+	setIntEnvVar("DEBUG_LEVEL", &defaultDebug)
+	setStringEnvVar("GCP_KMS_RESOURCE_NAME", &defaultKmsResourceName)
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "addr", ":9080", "proxy listen addr")
@@ -154,6 +139,8 @@ func loadConfig() *Config {
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
+
+	fmt.Printf("%+v\n", config)
 
 	return config
 }
