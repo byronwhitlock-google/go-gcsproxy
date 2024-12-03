@@ -140,8 +140,6 @@ func loadConfig() *Config {
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
 
-	fmt.Printf("%+v\n", config)
-
 	return config
 }
 
