@@ -5,29 +5,26 @@ import (
 	"strconv"
 )
 
-func setStringEnvVar(key string, defValue *string) int {
+func envConfigStringWithDefault(key string, defValue string) string {
 	envVar := os.Getenv(key)
 	if len(envVar) == 0 {
-		return 0
+		return defValue
 	}
-	*defValue = envVar
-	return 0
+	return envVar
 }
 
-func setBoolEnvVar(key string, defValue *bool) int {
+func envConfigBoolWithDefault(key string, defValue bool) bool {
 	envVar, boolError := strconv.ParseBool(os.Getenv(key))
 	if boolError == nil {
-		*defValue = envVar
-		return 0
+		return envVar
 	}
-	return 0
+	return defValue
 }
 
-func setIntEnvVar(key string, defValue *int) int {
+func envConfigIntWithDefault(key string, defValue int) int {
 	envVar, intError := strconv.Atoi(os.Getenv(key))
 	if intError == nil {
-		*defValue = envVar
-		return 0
+		return envVar
 	}
-	return 0
+	return defValue
 }

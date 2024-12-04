@@ -7,7 +7,6 @@ import (
 	"fmt"
 	rawLog "log"
 	"os"
-	"strconv"
 
 	"github.com/lqqyt2423/go-mitmproxy/addon"
 	"github.com/lqqyt2423/go-mitmproxy/proxy"
@@ -115,30 +114,11 @@ func main() {
 func loadConfig() *Config {
 	config := new(Config)
 
-	defaultSslInsecure := true
-	defaultCertPath := "/proxy/certs"
-	defaultDebug := 0
-	defaultKmsResourceName := ""
+	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
+	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
 
-	sslInsecure, sslInsecureErr := strconv.ParseBool("SSL_INSECURE")
-	if sslInsecureErr == nil {
-		defaultSslInsecure = sslInsecure
-	}
-
-	certPath := os.Getenv("PROXY_CERT_PATH")
-	if certPath != "" {
-		defaultCertPath = certPath
-	}
-
-	debug, debugErr := strconv.Atoi(os.Getenv("DEBUG_LEVEL"))
-	if debugErr == nil {
-		defaultDebug = debug
-	}
-
-	kmsResourceName := os.Getenv("GCP_KMS_RESOURCE_NAME")
-	if kmsResourceName != "" {
-		defaultKmsResourceName = kmsResourceName
-	}
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
 	flag.StringVar(&config.WebAddr, "web_port", ":9081", "web interface listen addr")
