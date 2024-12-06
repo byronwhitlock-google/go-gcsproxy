@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/lqqyt2423/go-mitmproxy/proxy"
+	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +22,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	unencryptedBytes, err := decryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName, f.Response.Body)
 	if err != nil {
-		return fmt.Errorf("unable to decrypt response body:", err)
+		return fmt.Errorf("unable to decrypt response body:%v", err)
 
 	}
 

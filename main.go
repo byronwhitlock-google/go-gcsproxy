@@ -8,9 +8,9 @@ import (
 	rawLog "log"
 	"os"
 
-	"github.com/lqqyt2423/go-mitmproxy/addon"
-	"github.com/lqqyt2423/go-mitmproxy/proxy"
-	"github.com/lqqyt2423/go-mitmproxy/web"
+	"github.com/byronwhitlock-google/go-mitmproxy/addon"
+	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
+	"github.com/byronwhitlock-google/go-mitmproxy/web"
 	log "github.com/sirupsen/logrus"
 )
 
