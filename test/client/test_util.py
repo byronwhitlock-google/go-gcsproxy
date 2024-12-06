@@ -5,13 +5,17 @@ import tensorflow as tf
 
 logger = logging.getLogger(__name__)
 
-def generate_object_url(gcs_testing_path: str, object_name: str) -> str:
-    return f"{gcs_testing_path}/{uuid.uuid4()}/{object_name}"
 
+def generate_object_url(gcs_testing_path: str, object_name: str, test_id: str = None, object_suffix: str = None) -> str:
+    test_id_part = test_id if test_id else str(uuid.uuid4())
+
+    suffix_part = f"-{object_suffix}" if object_suffix else ""
+
+    return f"{gcs_testing_path}/{test_id_part}/{object_name}{suffix_part}"
 
 
 def build_ds_fn(texts: Sequence[str]):
-    #del is_training, data_dir
+    # del is_training, data_dir
 
     def ds_fn() -> tf.data.Dataset:
         def data_gen():
@@ -26,14 +30,18 @@ def build_ds_fn(texts: Sequence[str]):
 
     return ds_fn
 
+
 def serialize_example(text):
     feature = {
         "text": tf.train.Feature(
-            bytes_list=tf.train.BytesList(value=[tf.io.encode_base64(text).numpy()])
+            bytes_list=tf.train.BytesList(
+                value=[tf.io.encode_base64(text).numpy()])
         )
     }
-    example_proto = tf.train.Example(features=tf.train.Features(feature=feature))
+    example_proto = tf.train.Example(
+        features=tf.train.Features(feature=feature))
     return example_proto.SerializeToString()
+
 
 def tf_serialize_example(text):
     tf_string = tf.py_function(
@@ -42,6 +50,7 @@ def tf_serialize_example(text):
         Tout=tf.string
     )
     return tf_string
+
 
 def parse_tfrecord_fn(example):
     feature_description = {
