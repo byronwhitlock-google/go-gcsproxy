@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mitmproxy-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gcs-app-deployment
+  namespace: mitmproxy-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gcs-app
+  template:
+    metadata:
+      labels:
+        app: gcs-app
+    spec:
+      volumes:
+      - name: proxycerts
+        emptyDir: {}
+      containers:
+      - name: gcs-app
+        image: us-docker.pkg.dev/axlearn/gcs-app/gcs-flask@sha256:d054c819c40f58d54f203a6cac36639b5ec88191d3214b2a802373dc22e41bed
+        ports:
+        - containerPort: 8000
+        env:
+          - name: https_proxy
+            value: "https://127.0.0.1:8080"
+          - name: REQUESTS_CA_BUNDLE
+            value: "/proxy/certs/mitmproxy-ca-cert.pem"
+        volumeMounts:
+        - name: proxycerts
+          mountPath: /proxy/certs
+      - name: mitmproxy
+        image: us-docker.pkg.dev/axlearn/gcs-proxy/mitmproxy@sha256:22b587102d06c7bd2ebd79d864a43f767f49b6971f1820a4a4c5b0fca514a62a
+        ports:
+        - containerPort: 8080
+        env:
+          - name: GCP_KMS_PROJECT_ID
+            value: "mando-host-project"
+          - name: GCP_KMS_KEY
+            value: "gcp-kms://projects/mando-host-project/locations/global/keyRings/test/cryptoKeys/proxy-kek"
+          - name: GCP_KMS_CREDENTIALS
+            value: "/app/credentials.json"
+        volumeMounts:
+        - name: proxycerts
+          mountPath: /proxy/certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gcs-app-loadbalancer
+  namespace: mitmproxy-demo
+spec:
+  type: LoadBalancer
+  selector:
+    app: gcs-app
+  ports:
+  - port: 80
+    targetPort: 8000
