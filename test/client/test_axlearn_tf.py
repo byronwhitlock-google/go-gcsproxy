@@ -23,14 +23,12 @@ import logging
 import time
 import test_util
 import tensorflow as tf
-from typing import Sequence
 from axlearn.common import file_system as fs
-# from axlearn.common import input_tf_data as tf_data
 from axlearn.common.config import config_for_function
-from axlearn.common.input_tf_data import (tfds_dataset, tfrecord_dataset)
-import uuid
+from axlearn.common.input_tf_data import (tfrecord_dataset)
 import tensorstore as ts
-import numpy as np
+import jax
+import jax.numpy as jnp
 
 LOG_LEVEL_STR = os.environ.get("PROXY_FUNC_TEST_LOG_LEVEL", "INFO")
 log_level = getattr(logging, LOG_LEVEL_STR.upper(), logging.INFO)
@@ -47,8 +45,12 @@ OBJECT_NAME = "func-test-object"
 OBJECT_CONTENT = "testing object content"
 
 TEST_UNIQUE_FOLDER = str(int(time.time() * 1000))
+if os.environ.get("https_proxy"):
+    TEST_UNIQUE_FOLDER += "-with-proxy"
+
+
 GCS_TESTING_PATH = f"gs://{TEST_BUCKET}/{TEST_UNIQUE_FOLDER}"
-logger.info(f"GCS testing path: {GCS_TESTING_PATH}")
+logger.info(f"GCS testing path: {GCS_TESTING_PATH}  https_proxy: {os.environ.get('https_proxy')}")
 
 
 @pytest.fixture(scope="module")
@@ -58,13 +60,11 @@ def setup_data():
         "original_object": OBJECT_CONTENT,
     }
 
-
-@pytest.mark.skip(reason="temp")
 def test_axlearn_fileio_copy(setup_data):
     """Test case for axlearn file_io.copy()"""
-    from axlearn.common import file_system as fs
+    test_id = test_axlearn_fileio_copy.__name__
     source = "/tmp/source"
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME)
+    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     expected = setup_data["original_object"]
     with open(source, 'w') as file:
@@ -78,13 +78,11 @@ def test_axlearn_fileio_copy(setup_data):
         actual = f.read()
     assert expected == actual
 
-# @pytest.mark.skip(reason="temp")
-
-
 def test_tf_io_gfile_write_read(setup_data):
     """Test case for tf.io.gfile.GFile.write()"""
+    test_id = test_tf_io_gfile_write_read.__name__
     expected = setup_data["original_object"]
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME)
+    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     logger.info(f"Creating {object_url}")
     with tf.io.gfile.GFile(object_url, "w") as f:
@@ -95,13 +93,9 @@ def test_tf_io_gfile_write_read(setup_data):
         actual = f.read()
     assert expected == actual
 
-# @pytest.mark.skip(reason="temp")
-
-
 def test_tf_data_write_read(setup_data):
     """Test case for tf.data.TFRecordDataset which is used by axlearn input_tf_data.tfrecrod_dataset"""
-    test_id = uuid.uuid4()
-
+    test_id = test_tf_data_write_read.__name__
     expected = {
         "texts": ["a", "b", "c", "d"]
     }
@@ -167,22 +161,75 @@ def test_tf_data_write_read(setup_data):
     assert sorted(expected["texts"]) == sorted(actual["texts"])
 
 
-@pytest.mark.skip(reason="temp")
-def test_tf_tensorstore_write_read_chunked(setup_data):
-    """Test case for tensortore - read from GCS"""
-    assert True
+@pytest.mark.skip(reason="Not working with proxy yet.")
+def test_tensorstore_orbax_write_read_pytree(setup_data):
+    """Test case for orbax/tensortore - write jax pytree to GCS with ocdbt driver which orbax uses."""
+    test_id = test_tensorstore_orbax_write_read_pytree.__name__
+    expected = {"a": jnp.array([1, 2, 3]), "b": jnp.ones((2, 2))}
+    bucket_name = TEST_BUCKET
+    object_url = test_util.generate_object_url(
+        GCS_TESTING_PATH, object_name="", test_id=test_id)
+    object_prefix = object_url.rstrip('/').replace(f"gs://{TEST_BUCKET}/", "")
 
+    leaves, tree_def = jax.tree_util.tree_flatten(expected)
+    logger.info(f"Writing PyTree data to {object_url}")
+    leaf_paths = []
+    for i, leaf in enumerate(leaves):
+        path = f"{object_prefix}/leaf_{i}"
+        logger.info(f"**** eshen path: {path}")
+        spec = {
+            "driver": "zarr",  # Use the Zarr driver for storing tensor data
+            "kvstore": {  # Specify OCDBT as the kvstore
+                "driver": "ocdbt",  # OCDBT as the key-value store
+                "base": {  # Base storage is GCS
+                    "driver": "gcs",
+                    "bucket": bucket_name,  # Specify the GCS bucket
+                    "path": path
+                }
+            },
+            "path": path
+        }
 
-@pytest.mark.skip(reason="temp")
+        # Save the leaf
+        ts_array = ts.open(
+            spec,
+            create=True,
+            dtype=leaf.dtype,
+            shape=leaf.shape
+        ).result()
+        ts_array[...] = jax.device_get(leaf)
+        leaf_paths.append(path)
+        
+    logger.info(f"Getting PyTree data to {object_url}")
+    actual_leaves = []
+    for path in leaf_paths:
+        spec = {
+            "driver": "zarr",  # Use the Zarr driver for storing tensor data
+            "kvstore": {  # Specify OCDBT as the kvstore
+                "driver": "ocdbt",  # OCDBT as the key-value store
+                "base": {  # Base storage is GCS
+                    "driver": "gcs",
+                    "bucket": bucket_name,  # Specify the GCS bucket
+                    "path": path
+                }
+            },
+            "path": path
+        }
+        ts_array = ts.open(spec).result()
+        actual_leaves.append(jnp.array(ts_array[...]))
+    
+    # Load PyTree
+    actual = jax.tree_util.tree_unflatten(tree_def, actual_leaves)
+    
+    assert actual.keys() == expected.keys()
+    for key in actual:
+        assert jnp.array_equal(actual[key], expected[key])
+
 def test_tf_tensorstore_write_read_simple(setup_data):
-    """Test case for tensortore - write to GCS. i.e orbax checkpoint."""
-    from google.cloud import storage
-
-    # Instantiate a client
-    storage_client = storage.Client()
-    storage_client.get_bucket("eshen-gcs-proxy-2")
+    """Test case for tensortore - write to GCS with single file driver."""
+    test_id = test_tf_tensorstore_write_read_simple.__name__
     expected = setup_data["original_object"]
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME)
+    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     # TensorStore specification using the JSON format
     spec = {
@@ -195,13 +242,14 @@ def test_tf_tensorstore_write_read_simple(setup_data):
     }
 
     store = ts.open(spec, create=True, open=True).result()
+    logger.info(f"Writing object to {object_url}")
     store.write(expected).result()
-
+    logger.info(f"Reading object from {object_url}")
     actual = store.read().result()
     assert expected == actual
 
 
-@pytest.mark.skip(reason="temp")
+@pytest.mark.skip(reason="to be worked on")
 def test_tf_summary_write(setup_data):
     """Test case for tf.summary - write to GCS. i.e tf native checkpoint."""
     assert True
