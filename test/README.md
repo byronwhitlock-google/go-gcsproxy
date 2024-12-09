@@ -18,4 +18,4 @@ To run these test, you can use the included DOCKERFILE via docker or podman.
 - Build the container locally
   - `sudo podman build . -t go-gcsproxy`
 - Make sure you have access to a bucket. Replace &lt;bucketname&gt; with the name of that bucket.
-  - `sudo podman run -e PROXY_FUNC_TEST_BUCKET=&lt;bucketname&gt; --mount type=bind,source=${HOME}/.config/gcloud,target=/app/.config/gcloud localhost/go-gcsproxy`
+  - `sudo podman run -e PROXY_FUNC_TEST_BUCKET=<bucketname> --mount type=bind,source=${HOME}/.config/gcloud,target=/app/.config/gcloud localhost/go-gcsproxy`
