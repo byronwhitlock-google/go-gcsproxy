@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 
 from mitmproxy import http
 from mitmproxy.net.http import status_codes
@@ -22,8 +23,6 @@ GCP_KMS_KEY = os.environ.get(
     "gcp-kms://projects/mando-host-project/locations/global/keyRings/test/cryptoKeys/proxy-kek",
 )
 GCP_KMS_CREDENTIALS = os.environ.get("GCP_KMS_CREDENTIALS", None)
-
-#GCS_PROXY_DISABLE_ENCRYPTION = os.environ.get("GCS_PROXY_DISABLE_ENCRYPTION", None)
 GCS_PROXY_DISABLE_ENCRYPTION = os.environ.get("GCS_PROXY_DISABLE_ENCRYPTION", "false").lower() == "true"
 
 
@@ -166,37 +165,42 @@ def encrypt_and_decrypt(
 
 
 def _log_response(flow: http.HTTPFlow, heading: str = None):
+  receiving = "<<<<"
   if heading:
     logger.debug(heading)
-  logger.debug("---------- response begin-------------")
-  logger.debug(f"  flow id: {flow.id}")
-  logger.debug(f"  URL: {flow.request.pretty_url}")
-  logger.debug(f"  Method: {flow.request.method}")
-  logger.debug(f"  Headers: {flow.request.headers}")
+  logger.debug(f"---------- response begin-------------")
+  logger.debug(f"{receiving}  flow id: {flow.id}")
+  logger.debug(f"{receiving}  URL: {flow.request.pretty_url}")
+  logger.debug(f"{receiving}  Method: {flow.request.method}")
+  logger.debug(f"{receiving}  Headers: {flow.request.headers}")
   if flow.request.content:
-    logger.debug(f" content len: {len(flow.request.content)}")
+    logger.debug(f"{receiving} content len: {len(flow.request.content)}")
   else:
-    logger.debug(f" content len: None")
+    logger.debug(f"{receiving} content len: None")
   if flow.response:
-    logger.debug(f" response.status_code {flow.response.status_code}")
-    logger.debug(f" response.header {flow.response.headers}")
-    logger.debug(f" response.content {flow.response.content}")
-  logger.debug("---------- response end-------------")
+    logger.debug(f"{receiving} response.status_code {flow.response.status_code}")
+    logger.debug(f"{receiving} response.header {flow.response.headers}")
+    if flow.response.content:
+      logger.debug(f"{receiving} response.content len {len(flow.response.content)}")
+    else:
+      logger.debug(f"{receiving} response.content len: None")
+  logger.debug(f"---------- response end-------------")
 
 
 def _log_request(flow: http.HTTPFlow, heading: str = None):
+  sending = ">>>>"
   if heading:
     logger.debug(heading)
-  logger.debug("---------- request begin-------------")
-  logger.debug(f"  flow id: {flow.id}")
-  logger.debug(f"  URL: {flow.request.pretty_url}")
-  logger.debug(f"  Method: {flow.request.method}")
-  logger.debug(f"  Headers: {flow.request.headers}")
+  logger.debug(f"---------- request begin -------------")
+  logger.debug(f"{sending}  flow id: {flow.id}")
+  logger.debug(f"{sending}  URL: {flow.request.pretty_url}")
+  logger.debug(f"{sending}  Method: {flow.request.method}")
+  logger.debug(f"{sending}  Headers: {flow.request.headers}")
   if flow.request.content:
-    logger.debug(f" content len: {len(flow.request.content)}")
+    logger.debug(f"{sending} content len: {len(flow.request.content)}")
   else:
-    logger.debug(f" content len: None")
-  logger.debug("---------- request end-------------")
+    logger.debug(f"{sending} content len: None")
+  logger.debug(f"---------- request end -------------")
 
 
 def request(flow: http.HTTPFlow) -> None:
@@ -209,14 +213,13 @@ def request(flow: http.HTTPFlow) -> None:
       flow: The HTTP flow object representing the request/response exchange.
   """
   try:
-    _log_request(flow, "###### request begin #####")
+    _log_request(flow)
     if GCS_PROXY_DISABLE_ENCRYPTION:
       return
     if flow.request.pretty_url.startswith(
         "https://storage.googleapis.com/upload"
     ):
       logger.info("GCS Upload Request intercepted:")
-      _log_request(flow, "*** Before encryption ***")
       
       upload_type = flow.request.query.get("uploadType")
       object_name = flow.request.query.get("name")
@@ -272,7 +275,6 @@ def request(flow: http.HTTPFlow) -> None:
       flow.request.content = flow.request.content.replace(
           object_content, encrypted_object_content
       )
-      _log_request(flow, "** after encryption***")
       logger.info(f"Request content modified after encryption.")
   except Exception as e:
     logger.exception("Error processing request: %s", e)
@@ -304,31 +306,21 @@ def response(flow: http.HTTPFlow) -> None:
   # TODO @ericshen hack for gcloud storage cp command
   #      Intercept the /upload response and change the md5 has to its original value
   try:
-    _log_response(flow, "###### response begin #####")
+    _log_response(flow)
     if GCS_PROXY_DISABLE_ENCRYPTION:
-      return
-    # if flow.request.headers.get("eshen") == "identity":
-    #   logger.debug(f"{flow.id} header eshen is identity response status: {flow.response.status_code}")
-    #   flow.response.status_code = status_codes.CONTINUE
-    #   logger.debug(f"{flow.id} header eshen is identity response status after: {flow.response.status_code}")
-     
+      return     
       
     if flow.request.pretty_url.startswith(
         "https://storage.googleapis.com/upload"
     ):
       logger.info("GCS Upload response intercepted")
-      _log_response(flow, "*** Before change response ***")
       original_md5_hash = flow.request.headers["gcs-proxy-original-md5-hash"]
       json_data = json.loads(flow.response.content)
       json_data["md5Hash"] = original_md5_hash
       flow.response.content = json.dumps(json_data).encode("utf-8")
-      _log_response(flow, "*** After change response ***")
-
-    if flow.request.pretty_url.startswith(
-        "https://storage.googleapis.com/download"
-    ):
+      logger.debug(f"change response md5  {json_data['md5Hash']} to orginal md5 {original_md5_hash}.")
+    if _is_download_response(flow):
       logger.info("GCS Download response intercepted:")
-      _log_response(flow, "Response before decrypt")
       gcs_url = flow.request.pretty_url
       gcs_url = gcs_url.split("/v1/b/")[1]
       bucket_url, object_url = (
@@ -359,7 +351,7 @@ def response(flow: http.HTTPFlow) -> None:
 
       content_length = len(flow.response.content)
       flow.response.headers["Content-Length"] = str(content_length)
-
+      logger.debug(f"Update response content_length to the length of decrpyted content:  {content_length}")
       # gcloud storage cp command uses "range" in request
       range_value = f"bytes 0-{content_length-1}/{content_length}".encode("utf-8")
 
@@ -372,7 +364,7 @@ def response(flow: http.HTTPFlow) -> None:
       # Update Google hash headers with decrypted contents md5 hash to pass the checksum validation.
       md5_hash = _base64_md5hash(decrypted_content)
       flow.response.headers["X-Goog-Hash"] = md5_hash
-      _log_response(flow, "Response after decrypt")
+      logger.debug(f"Update response md5 hash to that of decrpyted content:  {md5_hash}") 
   except Exception as e:
     logger.exception("Error processing response: %s", e)
     flow.response = http.Response.make(
@@ -381,22 +373,17 @@ def response(flow: http.HTTPFlow) -> None:
         headers={"Content-Type": "text/plain"},
     )
 
-def http_connect_upstream(flow: http.HTTPFlow):
-  logger.debug(f"{flow.request.http_version} http_connect_upstream headers before---- {flow.request.headers}")
 
-def http_connected(flow: http.HTTPFlow):
-  logger.debug(f"{flow.request.http_version} {flow.id} http_connected headers before---- {flow.request.headers}")
+def _is_download_response(flow: http.HTTPFlow) -> bool:
+    if flow.request.pretty_url.startswith(
+        "https://storage.googleapis.com/download"
+    ):
+        return True
+    if re.search(f"storage/v1/b/.+/o", flow.request.pretty_url) and flow.request.method == "GET" and flow.response.status_code // 100 == 2:
+        return True
+    return False
 
-def requestheaders(flow: http.HTTPFlow):
-  logger.debug(f"{flow.request.http_version} {flow.id} requestheaders before---- {flow.request.headers}")
-  # if flow.request.headers.get("Transfer-Encoding") == "identity":                                               
-  #   flow.request.headers["Transfer-Encoding"] = "chunked"
-  # if flow.request.headers.get("Expect"):
-  #    del flow.request.headers["Expect"]
-    
-  #logger.debug(f"{flow.request.http_version} {flow.id} request headers after---- {flow.request.headers}")
-
-# logger.debug("*** eshen addon start")
+# uncomment the following for python remote debugging
 # debugpy.listen(("0.0.0.0", 5678))  # Listen on all interfaces, port 5678
 # time.sleep(5) 
 # debugpy.wait_for_client()  # Pause execution until debugger attaches
@@ -404,8 +391,5 @@ def requestheaders(flow: http.HTTPFlow):
 def start():
   """Entry point for starting the mitmproxy addon."""
   from mitmproxy import ctx
-  ctx.master.addons.add(http_connect_upstream)
-  ctx.master.addons.add(http_connected)
-  ctx.master.addons.add(requestheaders)
   ctx.master.addons.add(request)
   ctx.master.addons.add(response)
