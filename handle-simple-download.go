@@ -17,10 +17,11 @@ func HandleSimpleDownloadRequest(f *proxy.Flow) error {
 }
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
-
+	bucketName:=getBucketNameSimpleDownload(f.Request.URL.Path)
 	// Update the response content with the decrypted content
 	unencryptedBytes, err := decryptBytes(f.Request.Raw().Context(),
-		config.KmsResourceName, f.Response.Body)
+		getKMSKeyName(bucketName),//config.KmsResourceName, 
+		f.Response.Body)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)
 

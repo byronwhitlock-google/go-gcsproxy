@@ -32,6 +32,7 @@ type Config struct {
 
 	// kms options
 	KmsResourceName string
+	KmsBucketKeyMapping string
 
 	Upstream     string // upstream proxy
 	UpstreamCert bool   // Connect to upstream server to look up certificate details. Default: True
@@ -115,9 +116,9 @@ func loadConfig() *Config {
 	config := new(Config)
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/Users/lkolluru/working-dir/apple/go-gcsproxy")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
+	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -130,6 +131,7 @@ func loadConfig() *Config {
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
 	flag.StringVar(&config.KmsResourceName, "kms_resource_name", defaultKmsResourceName, "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
+	flag.StringVar(&config.KmsBucketKeyMapping, "kms_bucket_key_mappings", "ehorning-axlearn/README.md:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy,ehorning-axlearn/README2.md:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy", "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
