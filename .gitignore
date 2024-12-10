@@ -5,6 +5,6 @@
 .venv
 **/__pycache__/
 
-test/python-gcs-proxy/.python-version
-test/python-gcs-proxy/METADATA
-test/python-gcs-proxy/mitm/capture.mitm
+.python-version
+METADATA
+capture.mitm

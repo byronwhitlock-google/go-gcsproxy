@@ -2,16 +2,20 @@
 Proxy funtioanl testing for Axlearn(tensforflow) libraries to interface GCS
 
 Setup:
-  Set the following the enviroment variables
+  Set the following the enviroment variables:
    -- PROXY_FUNC_TEST_BUCKET: GCS bucket for testing. Required
    -- https_proxy: Point to the proxy. Required
                    ie. https_proxy=https://localhost:8080
- 
+   -- SSL_CERT_FILE: Mitmproxy self-signed ca cert. For orbax/tensorstore. Required
+   -- CURL_CA_BUNDLE: Mitmproxy self-signed ca cert. For tf.io and tf.data. However, I couldn't 
+                    make it work and had to add the cert to the system store.
+   -- GCS_RETRY_CONFIG_MAX_RETRIES: Control GCS retry for tf.io and tf.data. Default is 10. Set 
+                    it to 0 to disable retry. Optional.
    
-For tensorflow(tf.io, tf.data), you'd need to add the mitmproxy self-signed ca cert to the system store. 
-   -- Linux: use update-ca-certficates
+   If needed, add the mitmproxy self-signed ca cert to the system store: 
+     -- Linux: use update-ca-certficates
          (https://manpages.ubuntu.com/manpages/xenial/man8/update-ca-certificates.8.html)
-   -- Mac: Keychain Access -> Certificates
+     -- Mac: Keychain Access -> Certificates
 
 Usage:
   >>> pytest -v -s --log-cli-level=INFO test_axlearn_tf.py
@@ -50,7 +54,8 @@ if os.environ.get("https_proxy"):
 
 
 GCS_TESTING_PATH = f"gs://{TEST_BUCKET}/{TEST_UNIQUE_FOLDER}"
-logger.info(f"GCS testing path: {GCS_TESTING_PATH}  https_proxy: {os.environ.get('https_proxy')}")
+logger.info(
+    f"GCS testing path: {GCS_TESTING_PATH}  https_proxy: {os.environ.get('https_proxy')}")
 
 
 @pytest.fixture(scope="module")
@@ -60,11 +65,18 @@ def setup_data():
         "original_object": OBJECT_CONTENT,
     }
 
+
 def test_axlearn_fileio_copy(setup_data):
-    """Test case for axlearn file_io.copy()"""
+    """Test case for axlearn file_io.copy()
+
+       Axlearn regular [checkpointer](https://github.com/apple/axlearn/blob/main/axlearn/common/checkpointer.py)
+       uses copy() to write checkpoints to GCS.
+
+    """
     test_id = test_axlearn_fileio_copy.__name__
     source = "/tmp/source"
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
+    object_url = test_util.generate_object_url(
+        GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     expected = setup_data["original_object"]
     with open(source, 'w') as file:
@@ -78,11 +90,13 @@ def test_axlearn_fileio_copy(setup_data):
         actual = f.read()
     assert expected == actual
 
+
 def test_tf_io_gfile_write_read(setup_data):
     """Test case for tf.io.gfile.GFile.write()"""
     test_id = test_tf_io_gfile_write_read.__name__
     expected = setup_data["original_object"]
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
+    object_url = test_util.generate_object_url(
+        GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     logger.info(f"Creating {object_url}")
     with tf.io.gfile.GFile(object_url, "w") as f:
@@ -92,6 +106,7 @@ def test_tf_io_gfile_write_read(setup_data):
     with tf.io.gfile.GFile(object_url, "r") as f:
         actual = f.read()
     assert expected == actual
+
 
 def test_tf_data_write_read(setup_data):
     """Test case for tf.data.TFRecordDataset which is used by axlearn input_tf_data.tfrecrod_dataset"""
@@ -161,7 +176,7 @@ def test_tf_data_write_read(setup_data):
     assert sorted(expected["texts"]) == sorted(actual["texts"])
 
 
-@pytest.mark.skip(reason="Not working with proxy yet.")
+@pytest.mark.skip(reason="Not working with encryption yet.")
 def test_tensorstore_orbax_write_read_pytree(setup_data):
     """Test case for orbax/tensortore - write jax pytree to GCS with ocdbt driver which orbax uses."""
     test_id = test_tensorstore_orbax_write_read_pytree.__name__
@@ -176,7 +191,6 @@ def test_tensorstore_orbax_write_read_pytree(setup_data):
     leaf_paths = []
     for i, leaf in enumerate(leaves):
         path = f"{object_prefix}/leaf_{i}"
-        logger.info(f"**** eshen path: {path}")
         spec = {
             "driver": "zarr",  # Use the Zarr driver for storing tensor data
             "kvstore": {  # Specify OCDBT as the kvstore
@@ -199,7 +213,7 @@ def test_tensorstore_orbax_write_read_pytree(setup_data):
         ).result()
         ts_array[...] = jax.device_get(leaf)
         leaf_paths.append(path)
-        
+
     logger.info(f"Getting PyTree data to {object_url}")
     actual_leaves = []
     for path in leaf_paths:
@@ -217,19 +231,21 @@ def test_tensorstore_orbax_write_read_pytree(setup_data):
         }
         ts_array = ts.open(spec).result()
         actual_leaves.append(jnp.array(ts_array[...]))
-    
+
     # Load PyTree
     actual = jax.tree_util.tree_unflatten(tree_def, actual_leaves)
-    
+
     assert actual.keys() == expected.keys()
     for key in actual:
         assert jnp.array_equal(actual[key], expected[key])
+
 
 def test_tf_tensorstore_write_read_simple(setup_data):
     """Test case for tensortore - write to GCS with single file driver."""
     test_id = test_tf_tensorstore_write_read_simple.__name__
     expected = setup_data["original_object"]
-    object_url = test_util.generate_object_url(GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
+    object_url = test_util.generate_object_url(
+        GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
 
     # TensorStore specification using the JSON format
     spec = {
@@ -247,12 +263,6 @@ def test_tf_tensorstore_write_read_simple(setup_data):
     logger.info(f"Reading object from {object_url}")
     actual = store.read().result()
     assert expected == actual
-
-
-@pytest.mark.skip(reason="to be worked on")
-def test_tf_summary_write(setup_data):
-    """Test case for tf.summary - write to GCS. i.e tf native checkpoint."""
-    assert True
 
 
 @pytest.mark.skip(reason="tfds is used to read public curated data from GCS. No need to encrypt.")
