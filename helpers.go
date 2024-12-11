@@ -52,8 +52,9 @@ func getBucketNameSimpleDownload(urlPath string)string{
 	
 	//Splits for the filepath with o in between to get exact path
 	res :=strings.Split(arr[1], "/o") // ["ehorning-axlearn/","/README.md"]
-
-	bucketName := res[0]
+	
+	// Adding this because there might be a path for bucket, so grabbing only bucket name
+	bucketName := strings.Split(res[0],"/")[0] 
 	fmt.Println("In BucketName Simple Download")
 	fmt.Println(bucketName)
 	return bucketName
