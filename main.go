@@ -98,6 +98,7 @@ func main() {
 
 	p.AddAddon(&EncryptGcsPayload{})
 	p.AddAddon(&DecryptGcsPayload{})
+	p.AddAddon(&GetReqHeader{})
 
 	if config.Dump != "" {
 		dumper := addon.NewDumperWithFilename(config.Dump, config.DumpLevel)
@@ -107,6 +108,7 @@ func main() {
 	configJson, _ := json.MarshalIndent(config, "", "\t")
 	msg := fmt.Sprintf("go-gcsproxy version '%v' Started. %v", config.version, string(configJson))
 	log.Info(msg)
+	log.Info(fmt.Sprintf("Encryption enabled: %t", !IsEncryptDisabled()))
 
 	log.Fatal(p.Start())
 }

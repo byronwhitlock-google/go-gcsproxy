@@ -4,6 +4,8 @@ VERSION := $(shell git describe --always --long --dirty)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 
+$(info Go binary location: $(shell which go))
+
 all: run
 
 server:

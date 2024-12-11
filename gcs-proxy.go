@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
@@ -12,6 +13,10 @@ type DecryptGcsPayload struct {
 	proxy.BaseAddon
 }
 type EncryptGcsPayload struct {
+	proxy.BaseAddon
+}
+
+type GetReqHeader struct {
 	proxy.BaseAddon
 }
 
@@ -28,6 +33,13 @@ const (
 	passThru // all other requests
 
 )
+
+func IsEncryptDisabled() bool {
+	if os.Getenv("GCS_PROXY_DISABLE_ENCRYPTION") == "" {
+		return false
+	}
+	return true
+}
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	if f.Request.URL.Host == "storage.googleapis.com" {
@@ -62,9 +74,17 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	return passThru
 }
 
+func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
+	log.Debug(fmt.Sprintf("got request headers: %s", f.Request.Raw().Header))
+}
+
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
+	if IsEncryptDisabled() {
+		return
+	}
+
 	var err error
 
 out:
@@ -99,6 +119,10 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
 		log.Error(fmt.Errorf("got invalid response code! '%v'......\n\n%s", f.Response.StatusCode, f.Response.Body))
 	}
+	if IsEncryptDisabled() {
+		return
+	}
+
 out:
 	switch m := InterceptGcsMethod(f); m {
 
