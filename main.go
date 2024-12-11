@@ -131,7 +131,7 @@ func loadConfig() *Config {
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
 	flag.StringVar(&config.KmsResourceName, "kms_resource_name", defaultKmsResourceName, "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
-	flag.StringVar(&config.KmsBucketKeyMapping, "kms_bucket_key_mappings", "ehorning-axlearn/README.md:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy,ehorning-axlearn/README2.md:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy", "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
+	flag.StringVar(&config.KmsBucketKeyMapping, "kms_bucket_key_mappings", "ehorning-axlearn:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy,ehorning-axlearn2:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy", "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()

@@ -95,7 +95,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		gcsMetadataMap["metadata"] = make(map[string]interface{})
 	}
 
-	fullBucketPath := getBucketName(gcsMetadataMap)
+	bucketName := getBucketNameMultipartUpload(gcsMetadataMap)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -115,7 +115,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 		// Encrypt the intercepted file
 		encryptedData, err = encryptBytes(f.Request.Raw().Context(),
-			getKMSKeyName(fullBucketPath),//config.KmsResourceName,
+			getKMSKeyName(bucketName),//config.KmsResourceName,
 			unencryptedFileContent.Bytes())
 
 		if err != nil {

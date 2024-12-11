@@ -12,39 +12,35 @@ func getKMSKeyName(bucketName string) string{
 
 	if bucketMap==nil{
 		fmt.Println("In Nil value")
-		return config.KmsResourceName
+		return ""
 	}
 	fmt.Println("bucketMap")
 	fmt.Println(bucketMap)
 	if value, exists := bucketMap[bucketName]; exists {
-		fmt.Println("Key exists with value:", value)
+		fmt.Println(" KMS Key entry exists with value:", value)
 		return value
 	} else {
-		fmt.Println("Key 'city' does not exist")
-		return config.KmsResourceName
+		fmt.Println("KMS key entry does not exist")
+		return ""
 	}
 	
 }
 
-func getBucketName(bucketNameMap map[string]interface{}) string{
-	var bucketName string
-	var fileName string
+func getBucketNameMultipartUpload(bucketNameMap map[string]interface{}) string{
+	var bucketNamePath string
 
 	for key, value := range bucketNameMap {
 			
 			if key=="bucket"{
-				bucketName=fmt.Sprintf("%s",value)
-			}
-			if key=="name"{
-				fileName=fmt.Sprintf("%s",value)
+				bucketNamePath=fmt.Sprintf("%s",value)
 			}
 
 		}
-	fullPath:= bucketName + "/"+fileName // may be add gs:// depending on the map object
+	bucketName:= strings.Split(bucketNamePath,"/")[0] // may be add gs:// depending on the map object
 
-	fmt.Println("In full path")
-	fmt.Println(fullPath)
-	return fullPath
+	fmt.Println("In BucketName Multipart Upload")
+	fmt.Println(bucketName)
+	return bucketName
 }
 
 //f.Request.URL.Path
@@ -52,12 +48,13 @@ func getBucketName(bucketNameMap map[string]interface{}) string{
 func getBucketNameSimpleDownload(urlPath string)string{
 
 	//Splits for the filepath with b in between
-	arr :=strings.Split(urlPath, "b") //["/download/storage/v1/","ehorning-axlearn/o/README.md"]
+	arr :=strings.Split(urlPath, "/b/") //["/download/storage/v1/","ehorning-axlearn/o/README.md"]
 	
 	//Splits for the filepath with o in between to get exact path
-	res :=strings.Split(arr[1], "/o/") // ["ehorning-axlearn/","/README.md"]
+	res :=strings.Split(arr[1], "/o") // ["ehorning-axlearn/","/README.md"]
 
-	fullPath := res[0][1:]+"/"+res[1]
-	fmt.Println(fullPath)
-	return fullPath
+	bucketName := res[0]
+	fmt.Println("In BucketName Simple Download")
+	fmt.Println(bucketName)
+	return bucketName
 }

@@ -32,7 +32,16 @@ const (
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	if f.Request.URL.Host == "storage.googleapis.com" {
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
+			
 			if f.Request.Method == "POST" {
+
+				bucketName := getBucketNameSimpleDownload(f.Request.URL.Path)
+				kmsKeyName:= getKMSKeyName(bucketName)
+				if kmsKeyName == ""{
+					fmt.Println("No KMS Key for respective bucket is not found")
+					return passThru
+				}
+
 				if f.Request.URL.Query().Get("uploadType") == "multipart" {
 					return multiPartUpload
 				}
