@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
+	log "github.com/sirupsen/logrus"
 )
 
 func HandleResumablePostRequest(f *proxy.Flow) error {
@@ -58,13 +60,56 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	}
 
 	// rewrite the byte range header to what we have already enxcrypted...
-	size = bytes.Count(encryptedData, []byte{})
+	size = len(encryptedData) //bytes.Count(encryptedData, []byte{})
 	end = size
 	start = 0
 
 	newByteRangeHeader := fmt.Sprintf("bytes %v-%v/%v", start, end-1, size)
 	f.Request.Header.Set("Content-Range", newByteRangeHeader)
 	f.Request.Body = encryptedData
+
+	log.Debug(fmt.Sprint("Encrypted PUT request headers: %v", f.Request.Header))
+	//log.Debug(fmt.Sprint("Encrypted PUT request Body: %s", f.Request.Body))
+
+	// Save the original content length for rewriting when download.
+	f.Request.Header.Set("gcs-proxy-original-content-length",
+		f.Request.Header.Get("Content-Length"))
+
+	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
+		strconv.Itoa(unencryptedFileContent.Len()))
+
+	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
+	f.Request.Header.Set("gcs-proxy-original-md5-hash",
+		base64_md5hash(unencryptedFileContent.Bytes()))
+
+	return nil
+}
+
+func HandleResumablePutResponse(f *proxy.Flow) error {
+	log.Debug("in HandleResumablePutResponse")
+
+	var jsonResponse map[string]interface{}
+	// turn the response body into a dynamic json map we can use
+	err := json.Unmarshal(f.Response.Body, &jsonResponse)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling JSON: %v", err)
+	}
+	fmt.Println(jsonResponse)
+
+	// update the response with the original md5 hash so gsutil/gcloud does not complain
+	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
+	jsonResponse["size"], err = strconv.Atoi(f.Request.Header.Get("gcs-proxy-unencrypted-file-size"))
+	if err != nil {
+		return fmt.Errorf("error setting json response: %v", err)
+	}
+
+	jsonData, err := json.Marshal(jsonResponse)
+	if err != nil {
+		return fmt.Errorf("error marshaling to JSON: %v", err)
+	}
+
+	//fmt.Println(jsonData)
+	f.Response.Body = jsonData
 	return nil
 }
 

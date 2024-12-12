@@ -121,6 +121,10 @@ out:
 		err = HandleSimpleDownloadResponse(f)
 		break out
 
+	case resumableUploadPut:
+		err = HandleResumablePutResponse(f)
+		break out
+
 	case singlePartUpload:
 		break out
 
