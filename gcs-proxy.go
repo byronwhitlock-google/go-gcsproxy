@@ -19,11 +19,12 @@ type EncryptGcsPayload struct {
 type gcsMethod int
 
 const (
-	multiPartUpload   gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
-	singlePartUpload                   // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
-	resumableUpload                    // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
-	simpleDownload                     // VERB=GET, uri=/download
-	streamingDownload                  // unsupported
+	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
+	singlePartUpload                     // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
+	resumableUploadPost                  // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/
+	resumableUploadPut                   // unsupported uploadType=resumable, VERB=PUT , uri=/upload/storage/v1/b/
+	simpleDownload                       // VERB=GET, uri=/download
+	streamingDownload                    // unsupported
 	metadataRequest
 	passThru // all other requests
 
@@ -40,7 +41,11 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 					return singlePartUpload
 				}
 				if f.Request.URL.Query().Get("uploadType") == "resumable" {
-					return resumableUpload
+					return resumableUploadPost
+				}
+			} else if f.Request.Method == "PUT" {
+				if f.Request.URL.Query().Get("uploadType") == "resumable" {
+					return resumableUploadPut
 				}
 			}
 		}
@@ -85,6 +90,10 @@ out:
 	case metadataRequest:
 		HandleMetadataRequest(f)
 		break out
+
+	case resumableUploadPut:
+		HandleResumablePutRequest(f)
+		break out
 	}
 	if err != nil {
 		log.Error(err)
@@ -116,6 +125,7 @@ out:
 	case metadataRequest:
 		HandleMetadataResponse(f)
 		break out
+
 	}
 	if err != nil {
 		log.Error(err)

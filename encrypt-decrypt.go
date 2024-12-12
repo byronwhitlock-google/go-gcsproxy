@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/google/tink/go/aead"
+	"github.com/google/tink/go/core/registry"
 	"github.com/google/tink/go/integration/gcpkms"
 )
 
@@ -46,10 +48,18 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS AEAD client: %v", err)
 	}
+	// 2. Register the KMS AEAD primitive wrapper.
+	registry.RegisterKMSClient(kmsClient)
+
+	// 3. Create the KMS-backed envelope AEAD.
+	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)
+	if envAEAD == nil {
+		panic(fmt.Errorf("aead.NewKMSEnvelopeAEAD: %v", err))
+	}
 
 	// Encrypt the bytes
 	aad := []byte("")
-	encryptedBytes, err := kmsAEAD.Encrypt(bytesToEncrypt, aad)
+	encryptedBytes, err := envAEAD.Encrypt(bytesToEncrypt, aad)
 	if err != nil {
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
@@ -75,9 +85,17 @@ func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byt
 		return nil, fmt.Errorf("failed to create KMS AEAD client: %v", err)
 	}
 
+	// Register the KMS AEAD primitive wrapper.
+	registry.RegisterKMSClient(kmsClient)
+
+	// Create the KMS-backed envelope AEAD.
+	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)
+	if envAEAD == nil {
+		return nil, fmt.Errorf("aead.NewKMSEnvelopeAEAD2 failed: %v", err)
+	}
 	// Decrypt bytes with KMS key
 	aad := []byte("")
-	decryptedBytes, err := kmsAEAD.Decrypt(bytesToDecrypt, aad)
+	decryptedBytes, err := envAEAD.Decrypt(bytesToDecrypt, aad)
 	if err != nil {
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
