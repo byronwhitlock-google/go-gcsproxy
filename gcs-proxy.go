@@ -24,11 +24,12 @@ type GetReqHeader struct {
 type gcsMethod int
 
 const (
-	multiPartUpload   gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
-	singlePartUpload                   // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
-	resumableUpload                    // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/ not supported
-	simpleDownload                     // VERB=GET, uri=/download
-	streamingDownload                  // unsupported
+	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
+	singlePartUpload                     // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
+	resumableUploadPost                  // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/
+	resumableUploadPut                   // unsupported uploadType=resumable, VERB=PUT , uri=/upload/storage/v1/b/
+	simpleDownload                       // VERB=GET, uri=/download
+	streamingDownload                    // unsupported
 	metadataRequest
 	passThru // all other requests
 
@@ -43,7 +44,7 @@ func IsEncryptDisabled() bool {
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	if f.Request.URL.Host == "storage.googleapis.com" {
-		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1/b/") {
+		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
 				if f.Request.URL.Query().Get("uploadType") == "multipart" {
 					return multiPartUpload
@@ -51,9 +52,13 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 				if f.Request.URL.Query().Get("uploadType") == "media" {
 					return singlePartUpload
 				}
-				if f.Request.URL.Query().Get("uploadType") == "resumable" {
-					return resumableUpload
-				}
+			}
+		}
+		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") {
+			if f.Request.Method == "POST" {
+				return resumableUploadPost
+			} else if f.Request.Method == "PUT" {
+				return resumableUploadPut
 			}
 		}
 
@@ -96,14 +101,20 @@ out:
 		break out
 
 	case simpleDownload:
-		HandleSimpleDownloadRequest(f)
+		err = HandleSimpleDownloadRequest(f)
 		break out
 
 	case singlePartUpload:
 		break out
 
 	case metadataRequest:
-		HandleMetadataRequest(f)
+		err = HandleMetadataRequest(f)
+		break out
+	case resumableUploadPost:
+		err = HandleResumablePostRequest(f)
+		break out
+	case resumableUploadPut:
+		err = HandleResumablePutRequest(f)
 		break out
 	}
 	if err != nil {
@@ -117,7 +128,7 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 	var err error
 
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
-		log.Error(fmt.Errorf("got invalid response code! '%v'......\n\n%s", f.Response.StatusCode, f.Response.Body))
+		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
 	}
 	if IsEncryptDisabled() {
 		return
@@ -134,12 +145,17 @@ out:
 		err = HandleSimpleDownloadResponse(f)
 		break out
 
+	case resumableUploadPut:
+		err = HandleResumablePutResponse(f)
+		break out
+
 	case singlePartUpload:
 		break out
 
 	case metadataRequest:
-		HandleMetadataResponse(f)
+		err = HandleMetadataResponse(f)
 		break out
+
 	}
 	if err != nil {
 		log.Error(err)
