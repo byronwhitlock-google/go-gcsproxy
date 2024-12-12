@@ -95,7 +95,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		gcsMetadataMap["metadata"] = make(map[string]interface{})
 	}
 
-	bucketName := getBucketNameMultipartUpload(gcsMetadataMap)
+	bucketName := getBucketNameFromGcsMetadata(gcsMetadataMap)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()

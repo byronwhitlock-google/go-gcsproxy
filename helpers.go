@@ -26,7 +26,7 @@ func getKMSKeyName(bucketName string) string{
 	
 }
 
-func getBucketNameMultipartUpload(bucketNameMap map[string]interface{}) string{
+func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string{
 	var bucketNamePath string
 
 	for key, value := range bucketNameMap {
@@ -45,7 +45,7 @@ func getBucketNameMultipartUpload(bucketNameMap map[string]interface{}) string{
 
 //f.Request.URL.Path
 //"/download/storage/v1/b/ehorning-axlearn/o/README.md"
-func getBucketNameSimpleDownload(urlPath string)string{
+func getBucketNameFromRequestUri(urlPath string)string{
 
 	//Splits for the filepath with b in between
 	arr :=strings.Split(urlPath, "/b/") //["/download/storage/v1/","ehorning-axlearn/o/README.md"]

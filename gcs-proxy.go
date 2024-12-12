@@ -35,7 +35,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 			
 			if f.Request.Method == "POST" {
 
-				bucketName := getBucketNameSimpleDownload(f.Request.URL.Path)
+				bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
 				kmsKeyName:= getKMSKeyName(bucketName)
 				if kmsKeyName == ""{
 					fmt.Println("No KMS Key for respective bucket is not found")
