@@ -3,11 +3,18 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 )
+
+func HandleResumablePostRequest(f *proxy.Flow) error {
+	// strip X-upload-content-length
+	f.Request.Header.Del("x-upload-content-length")
+	f.Request.Header.Del("X-Upload-Content-Length")
+	return nil //do nothing
+}
 
 // this is the raw data to be encoded.
 func HandleResumablePutRequest(f *proxy.Flow) error {
@@ -40,51 +47,53 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
 
-	byteRangeHeader := f.Request.Header.Get("content-range")
-	start, end, size := parseByteRangeHeader(byteRangeHeader)
+	byteRangeHeader := f.Request.Header.Get("Content-Range")
+	start, end, size, err := parseByteRangeHeader(byteRangeHeader)
+	if err != nil {
+		return err
+	}
 
-	if !(start == 0 && end == size) {
+	if !(start == 0 && end+1 == size) {
 		return fmt.Errorf("unsupported Byte range detected '%v'", byteRangeHeader)
 	}
 
 	// rewrite the byte range header to what we have already enxcrypted...
-	size = bytes.Count(encryptedData, []byte{}) - 1
+	size = bytes.Count(encryptedData, []byte{})
 	end = size
 	start = 0
 
-	byteRangeHeader = fmt.Sprintf("bytes %v-%v/%v", start, end, size)
-	f.Request.Header.Set("content-range", byteRangeHeader)
+	newByteRangeHeader := fmt.Sprintf("bytes %v-%v/%v", start, end-1, size)
+	f.Request.Header.Set("Content-Range", newByteRangeHeader)
+	f.Request.Body = encryptedData
 	return nil
 }
 
 // rangeString = "bytes 0-72355493/72355494"
-func parseByteRangeHeader(rangeString string) (start int, end int, size int) {
-	parts := strings.Split(rangeString, "/")
-	if len(parts) != 2 {
-		return 0, 0, 0 // Invalid range format
+func parseByteRangeHeader(rangeStr string) (start int, end int, size int, err error) {
+	// Regular expression to capture the start, end, and total values
+	re := regexp.MustCompile(`bytes (\d+)-(\d+)/(\d+)`)
+	matches := re.FindStringSubmatch(rangeStr)
+
+	if len(matches) != 4 {
+		return 0, 0, 0, fmt.Errorf("invalid range format: %s", rangeStr)
 	}
 
-	size, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	rStart, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return 0, 0, 0 // Error parsing size
+		return 0, 0, 0, fmt.Errorf("error parsing start: %v", err)
 	}
 
-	rangeParts := strings.Split(strings.TrimSpace(parts[0]), "-")
-	if len(rangeParts) != 2 {
-		return 0, 0, 0 // Invalid range format
-	}
-
-	start, err = strconv.Atoi(strings.TrimSpace(rangeParts[0]))
+	rEnd, err := strconv.Atoi(matches[2])
 	if err != nil {
-		return 0, 0, 0 // Error parsing start
+		return 0, 0, 0, fmt.Errorf("error parsing end: %v", err)
 	}
 
-	end, err = strconv.Atoi(strings.TrimSpace(rangeParts[1]))
+	rTotal, err := strconv.Atoi(matches[3])
 	if err != nil {
-		return 0, 0, 0 // Error parsing end
+		return 0, 0, 0, fmt.Errorf("error parsing total: %v", err)
 	}
 
-	return start, end, size
+	return rStart, rEnd, rTotal, nil
 }
 
 /*
