@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func envConfigStringWithDefault(key string, defValue string) string {
@@ -27,4 +29,26 @@ func envConfigIntWithDefault(key string, defValue int) int {
 		return envVar
 	}
 	return defValue
+}
+
+// Parsing the "bucket/path:project/key,bucket2:key2"
+func bucketKeyMappings(bucketKeyMapString string) map[string]string {
+
+	fmt.Println(bucketKeyMapString)
+	if bucketKeyMapString==""{
+		fmt.Println("No Bucket Key Mapping given , so using the default key for encryption and decryption")
+		return nil
+	}
+
+	bucketKeyMap := make(map[string]string)
+	bucketKeys := strings.Split(bucketKeyMapString, ",")
+	for i := 0; i < len(bucketKeys); i++ {
+		
+		bucketKeyArray := strings.Split(bucketKeys[i], ":")
+		bucketKeyMap[bucketKeyArray[0]]=bucketKeyArray[1]
+	}
+	
+	fmt.Println(bucketKeyMap)
+	return bucketKeyMap
+
 }
