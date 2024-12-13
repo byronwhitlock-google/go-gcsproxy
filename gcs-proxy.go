@@ -43,7 +43,8 @@ func IsEncryptDisabled() bool {
 }
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
-	if f.Request.URL.Host == "storage.googleapis.com" {
+	log.Debug("**** eshenlog **** InterceptGcsMethod")
+	if f.Request.URL.Host == "storage.googleapis.com" || f.Request.URL.Host == "www.googleapis.com" {
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
 				if f.Request.URL.Query().Get("uploadType") == "multipart" {
@@ -52,20 +53,36 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 				if f.Request.URL.Query().Get("uploadType") == "media" {
 					return singlePartUpload
 				}
+				if f.Request.URL.Query().Get("uploadType") == "resumable" {
+					log.Debug("**** eshenlog **** return resumableUploadPost")
+					return resumableUploadPost
+				}
 			}
-		}
-		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") {
-			if f.Request.Method == "POST" {
-				return resumableUploadPost
-			} else if f.Request.Method == "PUT" {
-				return resumableUploadPut
+			if f.Request.Method == "PUT" {
+				if f.Request.URL.Query().Get("uploadType") == "resumable" {
+					log.Debug("**** eshenlog **** return resumableUploadPut")
+					return resumableUploadPut
+				}
 			}
+
 		}
+		// if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") {
+		// 	if f.Request.Method == "POST" {
+		// 		return resumableUploadPost
+		// 	} else if f.Request.Method == "PUT" {
+		// 		return resumableUploadPut
+		// 	}
+		// }
 
 		if strings.HasPrefix(f.Request.URL.Path, "/download") {
 			//if f.Request.Method == "GET" {
 			return simpleDownload
 			//}
+		}
+
+		if f.Request.Method == "GET" && f.Request.URL.Host == "storage.googleapis.com" {
+			return simpleDownload
+
 		}
 
 		if strings.HasPrefix(f.Request.URL.Path, "/storage/v1/b/") {
@@ -86,9 +103,9 @@ func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
-	if IsEncryptDisabled() {
-		return
-	}
+	// if IsEncryptDisabled() {
+	// 	return
+	// }
 
 	var err error
 
@@ -124,15 +141,15 @@ out:
 }
 
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
-
+	log.Debug(fmt.Sprintf("*** eshenlog response: %s", f.Request.Raw().RequestURI))
 	var err error
 
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
 		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
 	}
-	if IsEncryptDisabled() {
-		return
-	}
+	// if IsEncryptDisabled() {
+	// 	return
+	// }
 
 out:
 	switch m := InterceptGcsMethod(f); m {
@@ -142,6 +159,7 @@ out:
 		break out
 
 	case simpleDownload:
+		log.Debug(fmt.Sprintf("*** eshenlog HandleSimpleDownloadResponse:"))
 		err = HandleSimpleDownloadResponse(f)
 		break out
 

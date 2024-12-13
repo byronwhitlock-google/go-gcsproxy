@@ -15,6 +15,7 @@ func HandleResumablePostRequest(f *proxy.Flow) error {
 	// strip X-upload-content-length
 	f.Request.Header.Del("x-upload-content-length")
 	f.Request.Header.Del("X-Upload-Content-Length")
+	log.Info("**** eshenlog *** HandleResumablePostRequest")
 	return nil //do nothing
 }
 
@@ -37,7 +38,7 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	*/
 	// update content range
 	// content-range: bytes 0-72355493/72355494
-
+	log.Info("**** eshenlog *** HandleResumablePUTRequest")
 	unencryptedFileContent := bytes.NewBuffer(f.Request.Body)
 
 	// Encrypt the intercepted file
