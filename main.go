@@ -62,12 +62,6 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
-
-	if (config.KmsBucketKeyMapping == "" && config.KmsResourceName == ""){
-		fmt.Printf("\n>>> kms_resource_name and kms_bucket_key_mappings are empty. Please set either of them. \n")
-		Usage()
-		os.Exit(0)
-	}
 	
 	if(config.KmsBucketKeyMapping != "" && config.KmsResourceName != ""){
 		fmt.Printf("\n>>> kms_resource_name and kms_bucket_key_mappings exist. Please set only one of them.\n")
@@ -135,7 +129,7 @@ func loadConfig() *Config {
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
 	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs") 
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy")
+	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
 	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING","")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
