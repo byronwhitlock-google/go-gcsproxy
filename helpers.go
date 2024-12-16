@@ -11,7 +11,10 @@ func getKMSKeyName(bucketName string) string{
 	bucketMap := bucketKeyMappings(config.KmsBucketKeyMapping)
 
 	if bucketMap==nil{
-		fmt.Println("In Nil value")
+		fmt.Println("Nil value for Bucket Maping, checking resource name")
+		if config.KmsResourceName!=""{
+			return config.KmsResourceName
+		}
 		return ""
 	}
 	fmt.Println("bucketMap")

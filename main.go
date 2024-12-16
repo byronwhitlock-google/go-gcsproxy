@@ -63,28 +63,32 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	if config.KmsResourceName == "" {
-		fmt.Printf("\n>>> kms_resource_name empty.\n")
+	if (config.KmsBucketKeyMapping == "" && config.KmsResourceName == ""){
+		fmt.Printf("\n>>> kms_resource_name and kms_bucket_key_mappings are empty. Please set either of them. \n")
+		Usage()
+		os.Exit(0)
+	}
+	
+	if(config.KmsBucketKeyMapping != "" && config.KmsResourceName != ""){
+		fmt.Printf("\n>>> kms_resource_name and kms_bucket_key_mappings exist. Please set only one of them.\n")
 		Usage()
 		os.Exit(0)
 	}
 
-	err := CheckKMS()
-	if err != nil {
-		fmt.Printf("\n>>> unable to initialize Google KMS. %v", err)
-		os.Exit(0)
+	if config.KmsResourceName != ""{
+		err := CheckKMS()
+		if err != nil {
+			fmt.Printf("\n>>> unable to initialize Google KMS. %v", err)
+			os.Exit(0)
+		}
 	}
 
-	if config.KmsBucketKeyMapping == "" {
-		fmt.Printf("\n>>> kms_bucket_key_mappings empty.\n")
-		Usage()
-		os.Exit(0)
-	}
-
-	err = CheckKmsBucketKeyMapping()
-	if err != nil {
-		fmt.Printf("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
-		os.Exit(0)
+	if config.KmsBucketKeyMapping != ""{
+		err := CheckKmsBucketKeyMapping()
+		if err != nil {
+			fmt.Printf("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
+			os.Exit(0)
+		}
 	}
 
 
@@ -131,8 +135,8 @@ func loadConfig() *Config {
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
 	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs") 
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
-	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING","ehorning-axlearn:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy,ehorning-axlearn2:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy")
+	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy")
+	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING","")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
