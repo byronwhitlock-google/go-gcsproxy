@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/textproto"
 	"strconv"
@@ -36,9 +37,11 @@ func GetMultipartMimeHeader(part *multipart.Part) textproto.MIMEHeader {
 func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// Extract the boundary from the Content-Type header.
-	contentType := f.Request.Header.Get("Content-Type")
-	boundary := strings.Split(contentType, "boundary=")[1]
-	boundary = strings.Trim(boundary, "'")
+	_, params, err := mime.ParseMediaType(f.Request.Header.Get("Content-Type"))
+	if err != nil {
+		return fmt.Errorf("error parsing content type %v", err)
+	}
+	boundary := params["boundary"]
 
 	// setup the body content reader
 	bodyReader := strings.NewReader(string(f.Request.Body))
@@ -51,7 +54,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	// buffer
 	multipartWriter := multipart.NewWriter(encryptedRequest)
 
-	err := multipartWriter.SetBoundary(boundary)
+	err = multipartWriter.SetBoundary(boundary)
 	if err != nil {
 		return fmt.Errorf("failed to set boundary in multipart-request: %v", err)
 	}

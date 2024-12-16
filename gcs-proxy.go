@@ -105,7 +105,7 @@ out:
 		break out
 
 	case singlePartUpload:
-		err = ConvertSinglePartUploadtoMultiPartUpload(f)
+		err = ConvertSinglePartUploadtoMultiPartUpload(f, f.Request.URL.Query().Get("name"))
 		break out
 
 	case metadataRequest:
@@ -151,7 +151,7 @@ out:
 		break out
 
 	case singlePartUpload:
-		err=HandleSinglePartUploadResponse(f)
+		err = HandleSinglePartUploadResponse(f)
 		break out
 
 	case metadataRequest:
