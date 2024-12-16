@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/textproto"
 	"strconv"
@@ -37,8 +38,19 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// Extract the boundary from the Content-Type header.
 	contentType := f.Request.Header.Get("Content-Type")
-	boundary := strings.Split(contentType, "boundary=")[1]
-	boundary = strings.Trim(boundary, "'")
+	log.Debugf("in HandleMultipartRequest, got content-type: %v", contentType)
+
+	// Remove single quotes from the boundary parameter
+	// RFC 2046 (MIME) is the key document for multipart messages. The boundary is a RFC822 parameter
+	//RFC 822 defines parameters as "attribute = value" where value can be a token or a quoted-string.
+	//RFC 822 only defines quoted-string with double quotes, not single quotes.
+	contentType = strings.ReplaceAll(contentType, "'", "\"")
+
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return fmt.Errorf("error parsing content type %v", err)
+	}
+	boundary := params["boundary"]
 
 	// setup the body content reader
 	bodyReader := strings.NewReader(string(f.Request.Body))
@@ -51,7 +63,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	// buffer
 	multipartWriter := multipart.NewWriter(encryptedRequest)
 
-	err := multipartWriter.SetBoundary(boundary)
+	err = multipartWriter.SetBoundary(boundary)
 	if err != nil {
 		return fmt.Errorf("failed to set boundary in multipart-request: %v", err)
 	}
