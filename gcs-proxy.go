@@ -105,6 +105,7 @@ out:
 		break out
 
 	case singlePartUpload:
+		err = ConvertSinglePartUploadtoMultiPartUpload(f)
 		break out
 
 	case metadataRequest:
@@ -150,6 +151,7 @@ out:
 		break out
 
 	case singlePartUpload:
+		err=HandleSinglePartUploadResponse(f)
 		break out
 
 	case metadataRequest:

@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// ##### Not using ######
 func GetMultipartMimeHeaderOctetStream() textproto.MIMEHeader {
 	// Process the part, get header , part value
 	mimeHeader := textproto.MIMEHeader{}
