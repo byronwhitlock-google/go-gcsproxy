@@ -54,7 +54,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 				}
 			}
 		}
-		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") {
+		if (strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") || strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1")) {
 			if f.Request.Method == "POST" {
 				return resumableUploadPost
 			} else if f.Request.Method == "PUT" {
@@ -87,6 +87,7 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
 	if IsEncryptDisabled() {
+		fmt.Println("Encryption Enabled: false")
 		return
 	}
 
@@ -132,6 +133,7 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
 	}
 	if IsEncryptDisabled() {
+		fmt.Println("Encryption Enabled: false")
 		return
 	}
 
