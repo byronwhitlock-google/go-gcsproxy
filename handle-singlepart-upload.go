@@ -28,11 +28,11 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow, objectName string) 
 	//f.Request.URL.Query().Set("uploadType","multipart")
 	f.Request.URL.RawQuery = "uploadType=multipart&alt=json"
 
-	fmt.Println(objectName)
-
 	//  Store original headers in variables, useful for generating metadata
 	orgContentType := f.Request.Header.Get("Content-Type")
-	fmt.Println(orgContentType)
+
+	log.Debug("in ConvertSinglePartUploadtoMultiPartUpload orgContentType")
+	log.Debug(orgContentType)
 
 	//  Change headers to use multipart
 	headersMap, boundary := generateHeadersList(f)
@@ -52,11 +52,9 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow, objectName string) 
 		base64_md5hash(f.Request.Body))
 
 	f.Request.Header.Del("Expect")
-	fmt.Println(boundary)
 
 	// Generate Metadata to insert in body
 	metadata := generateMetadata(f, orgContentType, objectName)
-	fmt.Println(metadata)
 
 	// Encrypt data in body
 	encryptBody, err := encryptBytes(f.Request.Raw().Context(),
@@ -65,9 +63,6 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow, objectName string) 
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
-
-	fmt.Println("Encrypted body")
-	fmt.Println(encryptBody)
 
 	//Write data to request body  to support multipart request
 	encryptedRequest := &bytes.Buffer{}
@@ -109,7 +104,7 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
-	fmt.Println(jsonResponse)
+	log.Debug(jsonResponse)
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("Gcs-proxy-original-md5-hash")
@@ -122,8 +117,6 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
-
-	//fmt.Println(jsonData)
 
 	f.Response.Body = jsonData
 	return nil

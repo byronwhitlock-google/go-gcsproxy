@@ -26,14 +26,12 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 
 	}
 
-	log.Debug("#### Decryption OK:")
-	log.Debug(fmt.Println(string(unencryptedBytes)))
+	log.Debug("#### Decryption OK")
 
 	f.Response.Body = unencryptedBytes
 	contentLength := bytes.Count(unencryptedBytes, []byte{})
 
-	log.Debug("#### Unencrypted Length:")
-	fmt.Println(contentLength)
+	log.Debugf("#### Unencrypted Length: %v", contentLength)
 
 	// Update content length headers with new length of decrypted data
 	f.Response.Header.Set("X-Goog-Stored-Content-Length", strconv.Itoa(contentLength))

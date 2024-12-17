@@ -9,6 +9,7 @@ import (
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/core/registry"
 	"github.com/google/tink/go/integration/gcpkms"
+	log "github.com/sirupsen/logrus"
 )
 
 func base64_md5hash(byteStream []byte) string {
@@ -17,7 +18,7 @@ func base64_md5hash(byteStream []byte) string {
 
 	_, err := hashProvider.Write(byteStream)
 	if err != nil {
-		fmt.Println("Error computing MD5 hash:", err)
+		log.Errorf("Error computing MD5 hash:%v", err)
 		return base64MD5Hash
 	}
 	md5Hash := hashProvider.Sum(nil) // Get the computed MD5 hash as a byte array
@@ -54,7 +55,7 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 	// 3. Create the KMS-backed envelope AEAD.
 	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)
 	if envAEAD == nil {
-		panic(fmt.Errorf("aead.NewKMSEnvelopeAEAD: %v", err))
+		return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
 	}
 
 	// Encrypt the bytes
@@ -91,7 +92,7 @@ func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byt
 	// Create the KMS-backed envelope AEAD.
 	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)
 	if envAEAD == nil {
-		return nil, fmt.Errorf("aead.NewKMSEnvelopeAEAD2 failed: %v", err)
+		return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
 	}
 	// Decrypt bytes with KMS key
 	aad := []byte("")

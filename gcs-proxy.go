@@ -111,9 +111,11 @@ out:
 	case metadataRequest:
 		err = HandleMetadataRequest(f)
 		break out
+
 	case resumableUploadPost:
 		err = HandleResumablePostRequest(f)
 		break out
+
 	case resumableUploadPut:
 		err = HandleResumablePutRequest(f)
 		break out
@@ -146,16 +148,20 @@ out:
 		err = HandleSimpleDownloadResponse(f)
 		break out
 
-	case resumableUploadPut:
-		err = HandleResumablePutResponse(f)
-		break out
-
 	case singlePartUpload:
 		err = HandleSinglePartUploadResponse(f)
 		break out
 
 	case metadataRequest:
 		err = HandleMetadataResponse(f)
+		break out
+
+	case resumableUploadPost:
+		err = HandleResumablePostResponse(f)
+		break out
+
+	case resumableUploadPut:
+		err = HandleResumablePutResponse(f)
 		break out
 
 	}
