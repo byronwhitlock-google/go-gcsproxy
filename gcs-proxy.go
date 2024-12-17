@@ -87,7 +87,6 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
 	if IsEncryptDisabled() {
-		fmt.Println("Encryption Enabled: false")
 		return
 	}
 
@@ -133,7 +132,6 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
 	}
 	if IsEncryptDisabled() {
-		fmt.Println("Encryption Enabled: false")
 		return
 	}
 
