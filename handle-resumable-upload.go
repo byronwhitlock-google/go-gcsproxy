@@ -71,7 +71,7 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error Loading Resumable Data: %v", err)
 	}
-	// don't updte metadata until we send the request. otherwise the object will not exists
+	// don't update metadata until we send the request. otherwise the object will not exist
 	defer updateGcsMetadata(f.Request.Raw().Context(),
 		f.Request.Header.Get("Authorization"),
 		resumeData["bucket"],

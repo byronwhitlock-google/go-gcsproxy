@@ -18,7 +18,7 @@ import (
 		3. Change the body to use boundary and add metadata and body(ecnrypted)
 */
 
-func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow, objectName string) error {
+func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// URL change to use Multipart
 
@@ -26,6 +26,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow, objectName string) 
 	//f.Request.URL.Query().Set("alt","json")
 	//f.Request.URL.Query().Del("name")
 	//f.Request.URL.Query().Set("uploadType","multipart")
+	objectName := f.Request.URL.Query().Get("name")
 	f.Request.URL.RawQuery = "uploadType=multipart&alt=json"
 
 	//  Store original headers in variables, useful for generating metadata
