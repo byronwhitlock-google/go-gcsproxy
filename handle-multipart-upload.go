@@ -37,10 +37,13 @@ func GetMultipartMimeHeader(part *multipart.Part) textproto.MIMEHeader {
 func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// Extract the boundary from the Content-Type header.
-
 	contentType := f.Request.Header.Get("Content-Type")
+	log.Debugf("in HandleMultipartRequest, got content-type: %v", contentType)
 
 	// Remove single quotes from the boundary parameter
+	// RFC 2046 (MIME) is the key document for multipart messages. The boundary is a RFC822 parameter
+	//RFC 822 defines parameters as "attribute = value" where value can be a token or a quoted-string.
+	//RFC 822 only defines quoted-string with double quotes, not single quotes.
 	contentType = strings.ReplaceAll(contentType, "'", "\"")
 
 	_, params, err := mime.ParseMediaType(contentType)
