@@ -27,7 +27,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	}
 
 	log.Debug("#### Decryption OK:")
-	log.Debug(fmt.Println(string(unencryptedBytes)))
+	log.Debug(string(unencryptedBytes))
 
 	f.Response.Body = unencryptedBytes
 	contentLength := bytes.Count(unencryptedBytes, []byte{})
