@@ -217,7 +217,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
 
-	//fmt.Println(jsonData)
+	log.Debug(jsonData)
 	f.Response.Body = jsonData
 	return nil
 }

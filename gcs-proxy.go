@@ -54,7 +54,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 				}
 			}
 		}
-		if (strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") || strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1")) {
+		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") || strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
 				return resumableUploadPost
 			} else if f.Request.Method == "PUT" {
@@ -105,7 +105,7 @@ out:
 		break out
 
 	case singlePartUpload:
-		err = ConvertSinglePartUploadtoMultiPartUpload(f, f.Request.URL.Query().Get("name"))
+		err = ConvertSinglePartUploadtoMultiPartUpload(f)
 		break out
 
 	case metadataRequest:
