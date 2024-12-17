@@ -90,7 +90,7 @@ func HandleResumablePutResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
-	fmt.Println(jsonResponse)
+	log.Debug(jsonResponse)
 
 	// update the response with the original md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")

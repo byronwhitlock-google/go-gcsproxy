@@ -27,7 +27,7 @@ func base64_md5hash(byteStream []byte) string {
 	base64MD5Hash = base64.StdEncoding.EncodeToString(md5Hash)
 
 	// Print the result
-	//fmt.Println("Base64-encoded MD5 hash:", base64MD5Hash)
+	log.Debugf("Base64-encoded MD5 hash:%v", base64MD5Hash)
 	return base64MD5Hash
 }
 
