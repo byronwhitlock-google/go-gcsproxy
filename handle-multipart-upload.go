@@ -78,7 +78,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	// grab the mime type for first part (should be application/json)
 	// Process the part, get header , part value
 	mimeHeader := GetMultipartMimeHeader(part)
-	fmt.Println(mimeHeader)
+	log.Debug(mimeHeader)
 	writer_part, err := multipartWriter.CreatePart(mimeHeader)
 	if err != nil {
 		return fmt.Errorf("failed to create new part in multipart-request: %v", err)
@@ -146,8 +146,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		customMetadata["x-md5Hash"] = base64_md5hash(unencryptedFileContent.Bytes())
 	}
 
-	fmt.Println(string(gcsObjectMetadataJson))
-	fmt.Println(gcsMetadata)
+	log.Debug(string(gcsObjectMetadataJson))
+	log.Debug(gcsMetadata)
 	log.Debug(fmt.Errorf("got metadata: %s", gcsObjectMetadataJson))
 
 	// Now write the gcs object metadata back to the multipart writer
@@ -181,8 +181,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
 		strconv.Itoa(unencryptedFileContent.Len()))
 
-	log.Debug(unencryptedFileContent)
-	log.Debug(encryptedRequest)
+	log.Trace(unencryptedFileContent)
+	log.Trace(encryptedRequest)
 
 	// update the body to the newly encrypted request
 	f.Request.Body = encryptedRequest.Bytes()
@@ -203,7 +203,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
-	fmt.Println(jsonResponse)
+	log.Debug(jsonResponse)
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
@@ -217,7 +217,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
 
-	//fmt.Println(jsonData)
+	log.Debug(jsonData)
 	f.Response.Body = jsonData
 	return nil
 }
