@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -33,6 +34,10 @@ type Config struct {
 	// kms options
 	KmsResourceName string
 
+	// custom metrics config
+	GcpProjectID string
+	MetricType   string
+
 	Upstream     string // upstream proxy
 	UpstreamCert bool   // Connect to upstream server to look up certificate details. Default: True
 }
@@ -46,6 +51,12 @@ func main() {
 		fmt.Println("go-gcsproxy: " + Version)
 		Usage()
 		os.Exit(0)
+	}
+
+	buf := &bytes.Buffer{}
+	_, err := createCustomMetric(buf, config.GcpProjectID, config.MetricType)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	if config.Debug > 0 {
@@ -68,7 +79,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	err := CheckKMS()
+	err = CheckKMS()
 	if err != nil {
 		fmt.Printf("\n>>> unable to initialize Google KMS. %v", err)
 		os.Exit(0)
@@ -120,6 +131,8 @@ func loadConfig() *Config {
 	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
 	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
+	defaultGcpProjectID := envConfigStringWithDefault("PROJECT_ID", "axlearn")
+	defaultMetricType := envConfigStringWithDefault("METRIC_TYPE", "custom.googleapis.com/gcs-proxy-go")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -132,6 +145,8 @@ func loadConfig() *Config {
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
 	flag.StringVar(&config.KmsResourceName, "kms_resource_name", defaultKmsResourceName, "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
+	flag.StringVar(&config.GcpProjectID, "gcp_project_id", defaultGcpProjectID, "GCP project ID of custom metrics.")
+	flag.StringVar(&config.MetricType, "metric_type", defaultMetricType, "custom metrics name. Must be in the format: custom.googleapis.com/<custom_metrics_name>")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
