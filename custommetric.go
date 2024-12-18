@@ -61,7 +61,7 @@ func writeTimeSeriesValue(projectID, metricType string, latency float64, mode st
 			}},
 		}},
 	}
-	fmt.Println("writeTimeseriesRequest: ", req)
+	// fmt.Println("writeTimeseriesRequest: ", req)
 
 	err = c.CreateTimeSeries(ctx, req)
 	if err != nil {
