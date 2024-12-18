@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
@@ -19,8 +20,14 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
 
 	// Update the response content with the decrypted content
+	latencyStart := time.Now()
 	unencryptedBytes, err := decryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName, f.Response.Body)
+	elapsed := time.Since(latencyStart).Seconds()
+	writeTimeSeriesValue(config.GcpProjectID,
+		config.MetricType,
+		elapsed, "decryption",
+		string(f.Request.URL.Path))
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)
 

@@ -10,6 +10,7 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
@@ -123,6 +124,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
+		start := time.Now()
 		encryptedData, err = encryptBytes(f.Request.Raw().Context(),
 			config.KmsResourceName,
 			unencryptedFileContent.Bytes())
@@ -130,6 +132,11 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		if err != nil {
 			return fmt.Errorf("error encrypting  request: %v", err)
 		}
+		elapsed := time.Since(start).Seconds()
+		writeTimeSeriesValue(config.GcpProjectID,
+			config.MetricType,
+			elapsed, "encryption",
+			string(f.Request.URL.Path))
 
 	}
 	///

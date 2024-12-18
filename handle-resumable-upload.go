@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
@@ -41,6 +42,7 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	unencryptedFileContent := bytes.NewBuffer(f.Request.Body)
 
 	// Encrypt the intercepted file
+	latencyStart := time.Now()
 	encryptedData, err := encryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName,
 		unencryptedFileContent.Bytes())
@@ -48,7 +50,11 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
-
+	elapsed := time.Since(latencyStart).Seconds()
+	writeTimeSeriesValue(config.GcpProjectID,
+		config.MetricType,
+		elapsed, "encryption",
+		string(f.Request.URL.Path))
 	byteRangeHeader := f.Request.Header.Get("Content-Range")
 	start, end, size, err := parseByteRangeHeader(byteRangeHeader)
 	if err != nil {
