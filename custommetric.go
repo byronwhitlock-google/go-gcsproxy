@@ -15,8 +15,6 @@ import (
 	monitoredres "google.golang.org/genproto/googleapis/api/monitoredres"
 )
 
-// [START monitoring_write_timeseries]
-
 // writeTimeSeriesValue writes a value for the custom metric created
 func writeTimeSeriesValue(projectID, metricType string, latency float64, mode string, request_id string) error {
 	ctx := context.Background()
@@ -61,7 +59,6 @@ func writeTimeSeriesValue(projectID, metricType string, latency float64, mode st
 			}},
 		}},
 	}
-	// fmt.Println("writeTimeseriesRequest: ", req)
 
 	err = c.CreateTimeSeries(ctx, req)
 	if err != nil {
@@ -69,8 +66,6 @@ func writeTimeSeriesValue(projectID, metricType string, latency float64, mode st
 	}
 	return nil
 }
-
-// [END monitoring_write_timeseries]
 
 // createCustomMetric creates a custom metric specified by the metric type.
 func createCustomMetric(w io.Writer, projectID, metricType string) (*metricpb.MetricDescriptor, error) {
@@ -110,5 +105,3 @@ func createCustomMetric(w io.Writer, projectID, metricType string) (*metricpb.Me
 
 	return m, nil
 }
-
-// [END monitoring_create_metric]
