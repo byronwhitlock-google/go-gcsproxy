@@ -33,3 +33,9 @@ Encrypting Reverse proxy for Google Cloud Storage.
 - [x] Safe logging
 - [x] No keys or data can be leaked in logging, including to cloud logging
 - [x] Configurable logging: debug, error, warning, info, etc.
+
+### Docker command to run go proxy
+
+```sh
+sudo docker run -e GCP_KMS_RESOURCE_NAME=projects/axlearn/locations/global/keyRings/proxy/cryptoKeys/proxy-kek -it --rm us-docker.pkg.dev/axlearn/gcs-proxy/go-mitmproxy:v1
+```
