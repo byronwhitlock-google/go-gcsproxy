@@ -90,6 +90,9 @@ func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 	id := uuid.New()
 	f.Request.Header.Add("x-request-id", id.String())
 
+	id := uuid.New()
+	f.Request.Header.Add("x-request-id", id.String())
+
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
 	if IsEncryptDisabled() {
 		return
@@ -134,6 +137,9 @@ out:
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 	// Adding custom header to uniquely identify the requests.
 	// Ref - https://cloud.google.com/healthcare-api/docs/audit-log-http-headers#configure_custom_http_headers
+	id := uuid.New()
+	f.Request.Header.Add("x-request-id", id.String())
+
 	id := uuid.New()
 	f.Request.Header.Add("x-request-id", id.String())
 
