@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -87,7 +86,7 @@ func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 	// Adding custom header to uniquely identify the requests.
 	// Ref - https://cloud.google.com/healthcare-api/docs/audit-log-http-headers#configure_custom_http_headers
-	id := uuid.New()
+	id := f.Id
 	f.Request.Header.Add("x-request-id", id.String())
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
@@ -134,7 +133,7 @@ out:
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 	// Adding custom header to uniquely identify the requests.
 	// Ref - https://cloud.google.com/healthcare-api/docs/audit-log-http-headers#configure_custom_http_headers
-	id := uuid.New()
+	id := f.Id
 	f.Request.Header.Add("x-request-id", id.String())
 
 	var err error

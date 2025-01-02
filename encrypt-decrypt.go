@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/core/registry"
@@ -33,7 +34,10 @@ func base64_md5hash(byteStream []byte) string {
 
 // Encrypt bytes with KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
+func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte, requestId string) ([]byte, error) {
+	// Capture the encryption latency
+	latencyStart := time.Now()
+
 	// Construct the full key URI for Google Cloud KMS
 	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
@@ -65,12 +69,21 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
 
+	elapsed := time.Since(latencyStart).Seconds()
+	writeTimeSeriesValue(config.GcpProjectID,
+		config.MetricType,
+		elapsed,
+		"encryption",
+		requestId)
 	return encryptedBytes, nil
 }
 
 // Decrypts bytes with using KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
+func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte, requestId string) ([]byte, error) {
+	// Capture the decryption latency
+	latencyStart := time.Now()
+
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
@@ -101,5 +114,11 @@ func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byt
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
 
+	elapsed := time.Since(latencyStart).Seconds()
+	writeTimeSeriesValue(config.GcpProjectID,
+		config.MetricType,
+		elapsed,
+		"decryption",
+		requestId)
 	return decryptedBytes, nil
 }

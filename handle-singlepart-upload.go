@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 	"strconv"
-	"time"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
@@ -61,19 +60,14 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	// Generate Metadata to insert in body
 	metadata := generateMetadata(f, orgContentType, objectName)
 
-	latencyStart := time.Now()
 	// Encrypt data in body
 	encryptBody, err := encryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName,
-		f.Request.Body)
+		f.Request.Body,
+		string(f.Request.Header.Get("x-request-id")))
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
-	elapsed := time.Since(latencyStart).Seconds()
-	writeTimeSeriesValue(config.GcpProjectID,
-		config.MetricType,
-		elapsed, "encryption",
-		string(f.Request.Header.Get("x-request-id")))
 
 	//Write data to request body  to support multipart request
 	encryptedRequest := &bytes.Buffer{}
@@ -134,19 +128,14 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 }
 
 func HandleSinglePartUploadRequest(f *proxy.Flow) error {
-	latencyStart := time.Now()
 	encryptedData, err := encryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName,
-		f.Request.Body)
+		f.Request.Body,
+		string(f.Request.Header.Get("x-request-id")))
 
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
-	elapsed := time.Since(latencyStart).Seconds()
-	writeTimeSeriesValue(config.GcpProjectID,
-		config.MetricType,
-		elapsed, "encryption",
-		string(f.Request.Header.Get("x-request-id")))
 
 	f.Request.Header.Set("gcs-proxy-original-content-length",
 		f.Request.Header.Get("Content-Length"))

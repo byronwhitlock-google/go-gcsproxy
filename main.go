@@ -165,6 +165,6 @@ func Usage() {
 func CheckKMS() error {
 	var ctx = context.TODO()
 
-	_, err := encryptBytes(ctx, config.KmsResourceName, []byte("Hello, World!"))
+	_, err := encryptBytes(ctx, config.KmsResourceName, []byte("Hello, World!"), "proxy-started")
 	return err
 }
