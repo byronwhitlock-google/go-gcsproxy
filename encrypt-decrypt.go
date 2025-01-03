@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func base64_md5hash(byteStream []byte) string {
+func Base64MD5Hash(byteStream []byte) string {
 	hashProvider := md5.New()
 	var base64MD5Hash string
 
@@ -33,13 +33,13 @@ func base64_md5hash(byteStream []byte) string {
 
 // Encrypt bytes with KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
+func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
 	// Create a KMS client
-	kmsClient, err := gcpkms.NewClientWithOptions(ctx, keyURI /*, option.WithCredentialsFile("path/to/credentials.json")*/)
+	kmsClient, err := gcpkms.NewClientWithOptions(ctx, keyURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS client: %v", err)
 	}
@@ -49,6 +49,7 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS AEAD client: %v", err)
 	}
+
 	// 2. Register the KMS AEAD primitive wrapper.
 	registry.RegisterKMSClient(kmsClient)
 
@@ -70,7 +71,7 @@ func encryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 
 // Decrypts bytes with using KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
+func DecryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
@@ -100,6 +101,5 @@ func decryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byt
 	if err != nil {
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
-
 	return decryptedBytes, nil
 }

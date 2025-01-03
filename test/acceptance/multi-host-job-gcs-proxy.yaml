@@ -1,0 +1,70 @@
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: fuji-multihost-job-gcs-proxy
+  annotations:
+    alpha.jobset.sigs.k8s.io/exclusive-topology: cloud.google.com/gke-nodepool
+spec:
+  failurePolicy:
+    maxRestarts: 5
+  replicatedJobs:
+    - name: slice
+      replicas: 1
+      template:
+        spec:
+          parallelism: 4
+          completions: 4
+          backoffLimit: 0
+          template:
+            spec:
+              hostNetwork: true
+              dnsPolicy: ClusterFirstWithHostNet
+              nodeSelector:
+                cloud.google.com/gke-tpu-accelerator: tpu-v4-podslice
+                cloud.google.com/gke-tpu-topology: 2x2x4
+              volumes:
+                - name: proxycerts
+                  emptyDir: {}
+              containers:
+                - name: mitmproxy
+                  image: us-docker.pkg.dev/cool-machine-learning/eshen-gcs-proxy/go-gcs-proxy-patch
+                  imagePullPolicy: Always
+                  ports:
+                    - containerPort: 9080
+                  env:
+                    # - name: GCS_PROXY_DISABLE_ENCRYPTION
+                    #   value: "true"
+                    - name: DEBUG_LEVEL
+                      value: "1"
+                    - name: PROXY_CERT_PATH
+                      value: "/proxy/certs"
+                    - name: GCP_KMS_BUCKET_KEY_MAPPING
+                      value: "eshen-gcs-proxy-acceptance:projects/cool-machine-learning/locations/global/keyRings/proxy/cryptoKeys/proxy-kek"
+                  volumeMounts:
+                    - name: proxycerts
+                      mountPath: /proxy/certs
+
+                - name: axlearn-fuji
+                  image: us-docker.pkg.dev/cool-machine-learning/eshen-gcs-proxy/axlearn/fuji
+                  imagePullPolicy: Always
+                  ports:
+                    - containerPort: 8471
+                    - containerPort: 8080
+                    - containerPort: 8431
+                  env:
+                    - name: CONFIG
+                      value: fuji-7B-s1-b32
+                    - name: OUTPUT_DIR
+                      value: "gs://eshen-gcs-proxy-acceptance"
+                    - name: https_proxy
+                      value: "http://127.0.0.1:9080"
+                    - name: GCS_RETRY_CONFIG_MAX_RETRIES
+                      value: "0"
+                  volumeMounts:
+                    - name: proxycerts
+                      mountPath: /proxy/certs
+                  securityContext:
+                    privileged: true
+                  resources:
+                    limits:
+                      google.com/tpu: 4

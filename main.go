@@ -43,7 +43,7 @@ var config *Config
 func main() {
 	config = loadConfig()
 	if config.version {
-		fmt.Println("go-gcsproxy: " + Version)
+		log.Infof("go-gcsproxy: %v", Version)
 		Usage()
 		os.Exit(0)
 	}
@@ -62,18 +62,17 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	if config.KmsBucketKeyMapping == ""{
-		fmt.Printf("\n>>> Please provide KMS Bucket Map.")
+	if config.KmsBucketKeyMapping == "" {
+		log.Infof("\n>>> Please provide KMS Bucket Map.")
 		os.Exit(0)
-		
-	}else {
+
+	} else {
 		err := CheckKmsBucketKeyMapping()
 		if err != nil {
-			fmt.Printf("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
+			log.Infof("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
 			os.Exit(0)
 		}
 	}
-
 
 	opts := &proxy.Options{
 		Debug:             config.Debug,
@@ -107,9 +106,8 @@ func main() {
 	}
 
 	configJson, _ := json.MarshalIndent(config, "", "\t")
-	msg := fmt.Sprintf("go-gcsproxy version '%v' Started. %v", config.version, string(configJson))
-	log.Info(msg)
-	log.Info(fmt.Sprintf("Encryption enabled: %t", !IsEncryptDisabled()))
+	log.Infof("go-gcsproxy version '%v' Started. %v", config.version, string(configJson))
+	log.Infof("Encryption enabled: %t", !IsEncryptDisabled())
 
 	log.Fatal(p.Start())
 }
@@ -118,9 +116,9 @@ func loadConfig() *Config {
 	config := new(Config)
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs") 
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING","")
+	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -142,25 +140,24 @@ func loadConfig() *Config {
 }
 func Usage() {
 	flag.Usage()
-	fmt.Println("\nEnvironment variables supported:")
-	fmt.Println("  PROXY_CERT_PATH")
-	fmt.Println("  SSL_INSECURE")
-	fmt.Println("  DEBUG_LEVEL")
-	fmt.Println("  GCP_KMS_BUCKET_KEY_MAPPING")
+	log.Info("\nEnvironment variables supported:")
+	log.Info("  PROXY_CERT_PATH")
+	log.Info("  SSL_INSECURE")
+	log.Info("  DEBUG_LEVEL")
+	log.Info("  GCP_KMS_BUCKET_KEY_MAPPING")
 }
-
 
 func CheckKmsBucketKeyMapping() error {
 	var ctx = context.TODO()
 	bucketKeyMap := bucketKeyMappings(config.KmsBucketKeyMapping)
-	if bucketKeyMap==nil{
+	if bucketKeyMap == nil {
 		return fmt.Errorf("No KmsBucketKeyMapping found")
 	}
 	for _, value := range bucketKeyMap {
-        _, err := encryptBytes(ctx, value, []byte("Hello, World!"))
-	   if err!=nil{
-		return err
-	   }
-    }
+		_, err := EncryptBytes(ctx, value, []byte("Hello, World!"))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
