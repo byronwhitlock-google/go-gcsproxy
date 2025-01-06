@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -174,4 +175,21 @@ out:
 
 	// recalculate content length
 	f.Response.ReplaceToDecodedBody()
+}
+
+func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) io.Reader{
+	fmt.Println("In StreamRequestModifier")
+	fmt.Println(f)
+	fmt.Println(io)
+	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
+	return stringReader 
+}
+
+func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) io.Reader{
+	fmt.Println("In StreamResponseModifier")
+	fmt.Println(f)
+	fmt.Println(io)
+	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
+	return stringReader 
+	
 }
