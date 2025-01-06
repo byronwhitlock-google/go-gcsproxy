@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/textproto"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// ##### Not using ######
 func GetMultipartMimeHeaderOctetStream() textproto.MIMEHeader {
 	// Process the part, get header , part value
 	mimeHeader := textproto.MIMEHeader{}
@@ -36,8 +38,19 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// Extract the boundary from the Content-Type header.
 	contentType := f.Request.Header.Get("Content-Type")
-	boundary := strings.Split(contentType, "boundary=")[1]
-	boundary = strings.Trim(boundary, "'")
+	log.Debugf("in HandleMultipartRequest, got content-type: %v", contentType)
+
+	// Remove single quotes from the boundary parameter
+	// RFC 2046 (MIME) is the key document for multipart messages. The boundary is a RFC822 parameter
+	//RFC 822 defines parameters as "attribute = value" where value can be a token or a quoted-string.
+	//RFC 822 only defines quoted-string with double quotes, not single quotes.
+	contentType = strings.ReplaceAll(contentType, "'", "\"")
+
+	_, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return fmt.Errorf("error parsing content type %v", err)
+	}
+	boundary := params["boundary"]
 
 	// setup the body content reader
 	bodyReader := strings.NewReader(string(f.Request.Body))
@@ -50,7 +63,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	// buffer
 	multipartWriter := multipart.NewWriter(encryptedRequest)
 
-	err := multipartWriter.SetBoundary(boundary)
+	err = multipartWriter.SetBoundary(boundary)
 	if err != nil {
 		return fmt.Errorf("failed to set boundary in multipart-request: %v", err)
 	}
@@ -65,7 +78,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	// grab the mime type for first part (should be application/json)
 	// Process the part, get header , part value
 	mimeHeader := GetMultipartMimeHeader(part)
-	fmt.Println(mimeHeader)
+	log.Debug(mimeHeader)
 	writer_part, err := multipartWriter.CreatePart(mimeHeader)
 	if err != nil {
 		return fmt.Errorf("failed to create new part in multipart-request: %v", err)
@@ -137,8 +150,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		customMetadata["x-md5Hash"] = base64_md5hash(unencryptedFileContent.Bytes())
 	}
 
-	fmt.Println(string(gcsObjectMetadataJson))
-	fmt.Println(gcsMetadata)
+	log.Debug(string(gcsObjectMetadataJson))
+	log.Debug(gcsMetadata)
 	log.Debug(fmt.Errorf("got metadata: %s", gcsObjectMetadataJson))
 
 	// Now write the gcs object metadata back to the multipart writer
@@ -172,8 +185,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
 		strconv.Itoa(unencryptedFileContent.Len()))
 
-	log.Debug(unencryptedFileContent)
-	log.Debug(encryptedRequest)
+	log.Trace(unencryptedFileContent)
+	log.Trace(encryptedRequest)
 
 	// update the body to the newly encrypted request
 	f.Request.Body = encryptedRequest.Bytes()
@@ -194,7 +207,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 	if err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
-	fmt.Println(jsonResponse)
+	log.Debug(jsonResponse)
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
@@ -208,7 +221,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
 
-	//fmt.Println(jsonData)
+	log.Debug(jsonData)
 	f.Response.Body = jsonData
 	return nil
 }

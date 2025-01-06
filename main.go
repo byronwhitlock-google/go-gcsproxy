@@ -89,7 +89,7 @@ func main() {
 	opts := &proxy.Options{
 		Debug:             config.Debug,
 		Addr:              config.Addr,
-		StreamLargeBodies: 1024 * 1024 * 5,
+		StreamLargeBodies: 1024 * 1024 * 500, // TODO: we need to implement streaming intercept functions set to 500 megs for now!
 		SslInsecure:       config.SslInsecure,
 		CaRootPath:        config.CertPath,
 		Upstream:          config.Upstream,
@@ -110,6 +110,7 @@ func main() {
 
 	p.AddAddon(&EncryptGcsPayload{})
 	p.AddAddon(&DecryptGcsPayload{})
+	p.AddAddon(&GetReqHeader{})
 
 	if config.Dump != "" {
 		dumper := addon.NewDumperWithFilename(config.Dump, config.DumpLevel)
@@ -119,6 +120,7 @@ func main() {
 	configJson, _ := json.MarshalIndent(config, "", "\t")
 	msg := fmt.Sprintf("go-gcsproxy version '%v' Started. %v", config.version, string(configJson))
 	log.Info(msg)
+	log.Info(fmt.Sprintf("Encryption enabled: %t", !IsEncryptDisabled()))
 
 	log.Fatal(p.Start())
 }

@@ -16,6 +16,8 @@ func HandleSimpleDownloadRequest(f *proxy.Flow) error {
 	return nil
 }
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
+	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse :%v", len(f.Response.Body)))
+
 	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
 	bucketName:=getBucketNameFromRequestUri(f.Request.URL.Path)
 	// Update the response content with the decrypted content
@@ -27,14 +29,12 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 
 	}
 
-	log.Debug("#### Decryption OK:")
-	log.Debug(fmt.Println(string(unencryptedBytes)))
+	log.Debug("#### Decryption OK")
 
 	f.Response.Body = unencryptedBytes
 	contentLength := bytes.Count(unencryptedBytes, []byte{})
 
-	log.Debug("#### Unencrypted Length:")
-	fmt.Println(contentLength)
+	log.Debugf("#### Unencrypted Length: %v", contentLength)
 
 	// Update content length headers with new length of decrypted data
 	f.Response.Header.Set("X-Goog-Stored-Content-Length", strconv.Itoa(contentLength))

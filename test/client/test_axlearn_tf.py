@@ -175,7 +175,7 @@ def test_tf_data_write_read(setup_data):
 
     assert sorted(expected["texts"]) == sorted(actual["texts"])
 
-
+# TODO b/384990452 proxy can't handle partial object donwload with encryption enabled
 @pytest.mark.skip(reason="Not working with encryption yet.")
 def test_tensorstore_orbax_write_read_pytree(setup_data):
     """Test case for orbax/tensortore - write jax pytree to GCS with ocdbt driver which orbax uses."""
