@@ -10,6 +10,42 @@ import (
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 )
 
+func getKMSKeyName(bucketName string) string{
+
+	bucketMap := bucketKeyMappings(config.KmsBucketKeyMapping)
+
+	if bucketMap==nil{
+		fmt.Println("In Nil value")
+		return ""
+	}
+	fmt.Println("bucketMap")
+	fmt.Println(bucketMap)
+	if value, exists := bucketMap[bucketName]; exists {
+		fmt.Println(" KMS Key entry exists with value:", value)
+		return value
+	} else {
+		fmt.Println("KMS key entry does not exist")
+		return ""
+	}
+	
+}
+
+func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string{
+	var bucketNamePath string
+
+	for key, value := range bucketNameMap {
+			
+			if key=="bucket"{
+				bucketNamePath=fmt.Sprintf("%s",value)
+			}
+
+		}
+	bucketName:= strings.Split(bucketNamePath,"/")[0] 
+
+	fmt.Println("In BucketName Multipart Upload")
+	fmt.Println(bucketName)
+	return bucketName
+}
 
 func generateRandom19DigitNumber() int{
 
