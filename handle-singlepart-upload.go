@@ -63,7 +63,8 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	// Encrypt data in body
 	encryptBody, err := encryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName,
-		f.Request.Body)
+		f.Request.Body,
+		string(f.Request.Header.Get("x-request-id")))
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
 	}
@@ -129,7 +130,8 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 func HandleSinglePartUploadRequest(f *proxy.Flow) error {
 	encryptedData, err := encryptBytes(f.Request.Raw().Context(),
 		config.KmsResourceName,
-		f.Request.Body)
+		f.Request.Body,
+		string(f.Request.Header.Get("x-request-id")))
 
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)

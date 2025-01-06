@@ -121,11 +121,11 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		if err != nil {
 			return fmt.Errorf("error reading  multipart request: %v", err)
 		}
-
 		// Encrypt the intercepted file
 		encryptedData, err = encryptBytes(f.Request.Raw().Context(),
 			config.KmsResourceName,
-			unencryptedFileContent.Bytes())
+			unencryptedFileContent.Bytes(),
+			string(f.Request.Header.Get("x-request-id")))
 
 		if err != nil {
 			return fmt.Errorf("error encrypting  request: %v", err)
