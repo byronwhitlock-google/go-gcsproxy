@@ -179,7 +179,7 @@ func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) i
 	fmt.Println("In StreamRequestModifier")
 	fmt.Println(f)
 	fmt.Println(io)
-	stringReader := strings.NewReader("Doesnt support stream requests!")
+	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
 	return stringReader 
 }
 
@@ -187,7 +187,7 @@ func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) 
 	fmt.Println("In StreamResponseModifier")
 	fmt.Println(f)
 	fmt.Println(io)
-	stringReader := strings.NewReader("Doesnt support stream responses!")
+	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
 	return stringReader 
 	
 }
