@@ -23,6 +23,7 @@ type GetReqHeader struct {
 // https://cloud.google.com/storage/docs/json_api/v1/objects
 type gcsMethod int
 
+
 const (
 	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
 	singlePartUpload                     // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
