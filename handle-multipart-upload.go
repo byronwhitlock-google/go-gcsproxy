@@ -98,6 +98,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		return fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
 	}
 
+	
+
 	gcsMetadataMap, ok := gcsMetadata.(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("error: JSON data is not a map")
@@ -105,6 +107,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	if gcsMetadataMap["metadata"] == nil {
 		gcsMetadataMap["metadata"] = make(map[string]interface{})
 	}
+
+	bucketName := getBucketNameFromGcsMetadata(gcsMetadataMap)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -124,7 +128,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 		// Encrypt the intercepted file
 		encryptedData, err = encryptBytes(f.Request.Raw().Context(),
-			config.KmsResourceName,
+			getKMSKeyName(bucketName),//config.KmsResourceName,
 			unencryptedFileContent.Bytes())
 
 		if err != nil {

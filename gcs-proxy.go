@@ -23,6 +23,7 @@ type GetReqHeader struct {
 // https://cloud.google.com/storage/docs/json_api/v1/objects
 type gcsMethod int
 
+
 const (
 	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
 	singlePartUpload                     // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
@@ -46,6 +47,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	if f.Request.URL.Host == "storage.googleapis.com" {
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
+
 				if f.Request.URL.Query().Get("uploadType") == "multipart" {
 					return multiPartUpload
 				}

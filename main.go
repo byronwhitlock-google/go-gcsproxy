@@ -32,6 +32,7 @@ type Config struct {
 
 	// kms options
 	KmsResourceName string
+	KmsBucketKeyMapping string
 
 	Upstream     string // upstream proxy
 	UpstreamCert bool   // Connect to upstream server to look up certificate details. Default: True
@@ -61,18 +62,29 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
-
-	if config.KmsResourceName == "" {
-		fmt.Printf("\n>>> kms_resource_name empty.\n")
+	
+	if(config.KmsBucketKeyMapping != "" && config.KmsResourceName != ""){
+		fmt.Printf("\n>>> kms_resource_name and kms_bucket_key_mappings exist. Please set only one of them.\n")
 		Usage()
 		os.Exit(0)
 	}
 
-	err := CheckKMS()
-	if err != nil {
-		fmt.Printf("\n>>> unable to initialize Google KMS. %v", err)
-		os.Exit(0)
+	if config.KmsResourceName != ""{
+		err := CheckKMS()
+		if err != nil {
+			fmt.Printf("\n>>> unable to initialize Google KMS. %v", err)
+			os.Exit(0)
+		}
 	}
+
+	if config.KmsBucketKeyMapping != ""{
+		err := CheckKmsBucketKeyMapping()
+		if err != nil {
+			fmt.Printf("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
+			os.Exit(0)
+		}
+	}
+
 
 	opts := &proxy.Options{
 		Debug:             config.Debug,
@@ -117,9 +129,10 @@ func loadConfig() *Config {
 	config := new(Config)
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs") 
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
 	defaultKmsResourceName := envConfigStringWithDefault("GCP_KMS_RESOURCE_NAME", "")
+	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING","")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -132,6 +145,7 @@ func loadConfig() *Config {
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
 	flag.StringVar(&config.KmsResourceName, "kms_resource_name", defaultKmsResourceName, "payload will be encrypted with this key stored in KMS. Must be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
+	flag.StringVar(&config.KmsBucketKeyMapping, "kms_bucket_key_mappings", defaultKmsBucketKeyMapping, "Its the bucket name to KMS key map, payload will be encrypted with the bucket to key stored in KMS. KMS key should be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
@@ -145,6 +159,7 @@ func Usage() {
 	fmt.Println("  PROXY_CERT_PATH")
 	fmt.Println("  SSL_INSECURE")
 	fmt.Println("  DEBUG_LEVEL")
+	fmt.Println("  GCP_KMS_BUCKET_KEY_MAPPING")
 }
 
 func CheckKMS() error {
@@ -152,4 +167,19 @@ func CheckKMS() error {
 
 	_, err := encryptBytes(ctx, config.KmsResourceName, []byte("Hello, World!"))
 	return err
+}
+
+func CheckKmsBucketKeyMapping() error {
+	var ctx = context.TODO()
+	bucketKeyMap := bucketKeyMappings(config.KmsBucketKeyMapping)
+	if bucketKeyMap==nil{
+		return fmt.Errorf("No KmsBucketKeyMapping found")
+	}
+	for _, value := range bucketKeyMap {
+        _, err := encryptBytes(ctx, value, []byte("Hello, World!"))
+	   if err!=nil{
+		return err
+	   }
+    }
+	return nil
 }
