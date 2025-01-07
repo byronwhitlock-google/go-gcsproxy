@@ -88,7 +88,7 @@ func main() {
 	opts := &proxy.Options{
 		Debug:             config.Debug,
 		Addr:              config.Addr,
-		StreamLargeBodies: 1024 * 1024 * 500, // TODO: we need to implement streaming intercept functions set to 500 megs for now!
+		StreamLargeBodies: 1024 * 1024 * 1000000, // TODO: we need to implement streaming intercept functions. Set to 1 trillion to test the proxy limits for crash.
 		SslInsecure:       config.SslInsecure,
 		CaRootPath:        config.CertPath,
 		Upstream:          config.Upstream,
