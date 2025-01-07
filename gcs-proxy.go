@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -183,19 +182,19 @@ out:
 	f.Response.ReplaceToDecodedBody()
 }
 
-func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) io.Reader {
-	fmt.Println("In StreamRequestModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Doesnt support stream requests!")
-	return stringReader
-}
+// func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) io.Reader {
+// 	fmt.Println("In StreamRequestModifier")
+// 	fmt.Println(f)
+// 	fmt.Println(io)
+// 	stringReader := strings.NewReader("Doesnt support stream requests!")
+// 	return stringReader
+// }
 
-func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) io.Reader {
-	fmt.Println("In StreamResponseModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Doesnt support stream responses!")
-	return stringReader
+// func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) io.Reader {
+// 	fmt.Println("In StreamResponseModifier")
+// 	fmt.Println(f)
+// 	fmt.Println(io)
+// 	stringReader := strings.NewReader("Doesnt support stream responses!")
+// 	return stringReader
 
-}
+// }
