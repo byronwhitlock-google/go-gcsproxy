@@ -47,9 +47,12 @@ even Google from having access to their data.
     comprehensive list of available options, refer to the `Makefile`.
 3.  Run the proxy:
     ```bash
-    ./go-gcsproxy -debug=1 -port=:8080 \
+    ./go-gcsproxy -debug=1  \
       -kms_resource_name=projects/YOUR_PROJECT_ID/locations/global/keyRings/YOUR_KEYRING/cryptoKeys/YOUR_CRYPTO_KEY
+      -cert_path=/your/path/to/certs # mitmproxy-ca.pem is automatically generated on first run of proxy
     ```
+4. (optional) configure environment variables for `GCP_KMS_RESOURCE_NAME, PROXY_CERT_PATH, SSL_INSECURE, DEBUG_LEVEL, GCP_KMS_BUCKET_KEY_MAPPING`
+
 ### Usage (Client)    
 To use `gsutil` or `gcloud` with the `go-gcsproxy`, you need to configure them to
 use the proxy and trust the proxy's CA certificate.
@@ -68,6 +71,21 @@ gcloud config set custom_ca_certs_file $REQUESTS_CA_BUNDLE
 ```
 For detailed testing instructions and information on setting up a test
 environment, please refer to the [testing documentation](./test/README.md).
+
+### Encryption Key per GCS Path
+By default, every request to GCS will be encryted including requests to public datasets.
+
+This optional feature allows for more granular control over encryption keys by enabling
+the specification of different KMS keys for different GCS paths (buckets or
+sub-paths within buckets). 
+
+The `GCP_KMS_BUCKET_KEY_MAPPING` parameter (or `-gcp_kms_bucket_key_mappings` command-line flag) accepts a key-value encoded string to map GCS paths to KMS keys.
+
+**Example:**
+
+GCP_KMS_BUCKET_KEY_MAPPING="bucket1:projects/project1/locations/global/keyRings/keyring1/cryptoKeys/key1,bucket2/path/to/data:projects/project2/locations/global/keyRings/keyring2/cryptoKeys/key2"
+
+This example maps `bucket1` to `key1` and `bucket2/path/to/data` to `key2`.
 
 ## Roadmap
 
