@@ -126,30 +126,3 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 	f.Response.Body = jsonData
 	return nil
 }
-
-func HandleSinglePartUploadRequest(f *proxy.Flow) error {
-	encryptedData, err := encryptBytes(f.Request.Raw().Context(),
-		config.KmsResourceName,
-		f.Request.Body)
-
-	if err != nil {
-		return fmt.Errorf("error encrypting  request: %v", err)
-	}
-
-	f.Request.Header.Set("gcs-proxy-original-content-length",
-		f.Request.Header.Get("Content-Length"))
-
-	f.Request.Header.Set("Content-Length",
-		strconv.Itoa(len(encryptedData)))
-
-	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
-	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		base64_md5hash(f.Request.Body))
-
-	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
-		strconv.Itoa(len(f.Request.Body)))
-
-	f.Request.Body = encryptedData
-
-	return nil
-}

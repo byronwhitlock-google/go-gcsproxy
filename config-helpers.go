@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func envConfigStringWithDefault(key string, defValue string) string {
@@ -34,9 +35,9 @@ func envConfigIntWithDefault(key string, defValue int) int {
 // Parsing the "bucket/path:project/key,bucket2:key2"
 func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 
-	fmt.Println(bucketKeyMapString)
+	log.Debug(bucketKeyMapString)
 	if bucketKeyMapString==""{
-		fmt.Println("No Bucket Key Mapping given , so using the default key for encryption and decryption")
+		log.Debug("No Bucket Key Mapping given , so using the default key for encryption and decryption")
 		return nil
 	}
 
@@ -48,7 +49,7 @@ func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 		bucketKeyMap[bucketKeyArray[0]]=bucketKeyArray[1]
 	}
 	
-	fmt.Println(bucketKeyMap)
+	log.Debug(bucketKeyMap)
 	return bucketKeyMap
 
 }
