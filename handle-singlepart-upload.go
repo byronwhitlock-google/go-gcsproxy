@@ -59,10 +59,11 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// Generate Metadata to insert in body
 	metadata := generateMetadata(f, orgContentType, objectName)
+	bucketName:=getBucketNameFromRequestUri(f.Request.URL.Path)
 
 	// Encrypt data in body
 	encryptBody, err := encryptBytes(f.Request.Raw().Context(),
-		config.KmsResourceName,
+		getKMSKeyName(bucketName),
 		f.Request.Body)
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)

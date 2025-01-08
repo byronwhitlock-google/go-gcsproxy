@@ -15,15 +15,16 @@ func getKMSKeyName(bucketName string) string{
 	bucketMap := bucketKeyMappings(config.KmsBucketKeyMapping)
 
 	if bucketMap==nil{
-		fmt.Println("In Nil value")
-		return ""
+		fmt.Println("No bucket mapping found")
 	}
-	fmt.Println("bucketMap")
 	fmt.Println(bucketMap)
 	if value, exists := bucketMap[bucketName]; exists {
 		fmt.Println(" KMS Key entry exists with value:", value)
 		return value
 	} else {
+		if config.KmsResourceName!=""{
+			return config.KmsResourceName
+		}
 		fmt.Println("KMS key entry does not exist")
 		return ""
 	}
