@@ -81,6 +81,8 @@ sub-paths within buckets).
 
 The `GCP_KMS_BUCKET_KEY_MAPPING` parameter (or `-gcp_kms_bucket_key_mappings` command-line flag) accepts a key-value encoded string to map GCS paths to KMS keys.
 
+**Buckets not listed in  `GCP_KMS_BUCKET_KEY_MAPPING` will pass-thru to GCS unencrypted**
+
 **Example:**
 
 GCP_KMS_BUCKET_KEY_MAPPING="bucket1:projects/project1/locations/global/keyRings/keyring1/cryptoKeys/key1,bucket2/path/to/data:projects/project2/locations/global/keyRings/keyring2/cryptoKeys/key2"
