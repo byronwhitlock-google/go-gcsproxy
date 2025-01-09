@@ -162,17 +162,18 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 
 	// Unmarshal the json contents of the first part.
 	var dataMap map[string]string
-	err := json.Unmarshal(f.Request.Body, &dataMap)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling gcsObjectMetadata in HandleResumablePostResponse: %v", err)
+	if len(f.Request.Body) > 0 {
+		err := json.Unmarshal(f.Request.Body, &dataMap)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling gcsObjectMetadata in HandleResumablePostResponse: %v", err)
+		}
 	}
 
 	// Check if request body has bucket name as pythonsdk does not give bucket name, coming from python sdk
 	_, exists := dataMap["bucket"]
-	if !exists{
-		dataMap["bucket"]=getBucketNameFromRequestUri(f.Request.URL.Path)
+	if !exists {
+		dataMap["bucket"] = getBucketNameFromRequestUri(f.Request.URL.Path)
 	}
-
 
 	// uploader id comes from GCS so it is in the Response
 	uploaderId := f.Response.Header.Get("X-GUploader-UploadID")
