@@ -1,10 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func envConfigStringWithDefault(key string, defValue string) string {
@@ -31,12 +32,11 @@ func envConfigIntWithDefault(key string, defValue int) int {
 	return defValue
 }
 
-// Parsing the "bucket/path:project/key,bucket2:key2"
+// Parsing the "*:global-key" or "bucket/path:project/key,bucket2:key2" but the global key overrides all the other keys
 func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 
-	fmt.Println(bucketKeyMapString)
 	if bucketKeyMapString==""{
-		fmt.Println("No Bucket Key Mapping given , so using the default key for encryption and decryption")
+		log.Debug("No Bucket Key Mapping given")
 		return nil
 	}
 
@@ -48,7 +48,7 @@ func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 		bucketKeyMap[bucketKeyArray[0]]=bucketKeyArray[1]
 	}
 	
-	fmt.Println(bucketKeyMap)
+	log.Debugf("BucketkeyMapping: %v", bucketKeyMap)
 	return bucketKeyMap
 
 }

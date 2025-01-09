@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
+	log "github.com/sirupsen/logrus"
 )
 
 func getKMSKeyName(bucketName string) string{
@@ -15,16 +16,22 @@ func getKMSKeyName(bucketName string) string{
 	bucketMap := bucketKeyMappings(config.KmsBucketKeyMapping)
 
 	if bucketMap==nil{
-		fmt.Println("In Nil value")
+		log.Debug("No bucket mapping found")
 		return ""
 	}
-	fmt.Println("bucketMap")
-	fmt.Println(bucketMap)
+	log.Debug(bucketMap)
+
+	// Global key is highest priority
+	if value, exists := bucketMap["*"]; exists {
+		log.Debugf("Global KMS Key entry exists with value: %v", value)
+		return value
+	}
+	// If Global key , then check other bucket to KMS key mapping
 	if value, exists := bucketMap[bucketName]; exists {
-		fmt.Println(" KMS Key entry exists with value:", value)
+		log.Debugf(" KMS Key entry exists with value: %v", value)
 		return value
 	} else {
-		fmt.Println("KMS key entry does not exist")
+		log.Debug("KMS key entry does not exist")
 		return ""
 	}
 	
@@ -42,8 +49,7 @@ func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string{
 		}
 	bucketName:= strings.Split(bucketNamePath,"/")[0] 
 
-	fmt.Println("In BucketName Multipart Upload")
-	fmt.Println(bucketName)
+	log.Debug("In Multipart Upload for bucket name: %v",bucketName)
 	return bucketName
 }
 
@@ -90,8 +96,7 @@ func getBucketNameFromRequestUri(urlPath string)string{
 	
 	// Adding this because there might be a path for bucket, so grabbing only bucket name
 	bucketName := strings.Split(res[0],"/")[0] 
-	fmt.Println("In BucketName Simple Download")
-	fmt.Println(bucketName)
+	log.Debug("In Multipart Upload for bucket name: %v",bucketName)
 	return bucketName
 }
 //f.Request.URL.Path

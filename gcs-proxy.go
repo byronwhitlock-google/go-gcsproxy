@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -45,6 +44,11 @@ func IsEncryptDisabled() bool {
 }
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
+	bucketName:=getBucketNameFromRequestUri(f.Request.URL.Path)
+	if getKMSKeyName(bucketName)==""{
+		return passThru
+	}
+
 	if f.Request.URL.Host == "storage.googleapis.com" {
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
@@ -89,6 +93,9 @@ func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
+
+	log.Debug(fmt.Sprintf("got request: %s", f.Request))
+
 	if IsEncryptDisabled() {
 		return
 	}
@@ -132,6 +139,8 @@ out:
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	var err error
+
+	log.Debug(fmt.Sprintf("got response: %s", f.Response.Body))
 
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
 		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
@@ -177,19 +186,3 @@ out:
 	f.Response.ReplaceToDecodedBody()
 }
 
-func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) io.Reader{
-	fmt.Println("In StreamRequestModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
-	return stringReader 
-}
-
-func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) io.Reader{
-	fmt.Println("In StreamResponseModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
-	return stringReader 
-	
-}
