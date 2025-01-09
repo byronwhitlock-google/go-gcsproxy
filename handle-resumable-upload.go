@@ -162,7 +162,7 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 
 	// Unmarshal the json contents of the first part.
 	var dataMap map[string]string
-	if len(f.Response.Body) > 0 {
+	if len(f.Request.Body) > 0 {
 		err := json.Unmarshal(f.Request.Body, &dataMap)
 		if err != nil {
 			return fmt.Errorf("error unmarshalling gcsObjectMetadata in HandleResumablePostResponse: %v", err)
