@@ -32,12 +32,11 @@ func envConfigIntWithDefault(key string, defValue int) int {
 	return defValue
 }
 
-// Parsing the "bucket/path:project/key,bucket2:key2"
+// Parsing the "*:global-key" or "bucket/path:project/key,bucket2:key2" but the global key overrides all the other keys
 func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 
-	log.Debug(bucketKeyMapString)
 	if bucketKeyMapString==""{
-		log.Debug("No Bucket Key Mapping given , so using the default key for encryption and decryption")
+		log.Debug("No Bucket Key Mapping given")
 		return nil
 	}
 
@@ -49,7 +48,7 @@ func bucketKeyMappings(bucketKeyMapString string) map[string]string {
 		bucketKeyMap[bucketKeyArray[0]]=bucketKeyArray[1]
 	}
 	
-	log.Debug(bucketKeyMap)
+	log.Debugf("BucketkeyMapping: %v", bucketKeyMap)
 	return bucketKeyMap
 
 }

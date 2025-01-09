@@ -23,12 +23,12 @@ func getKMSKeyName(bucketName string) string{
 
 	// Global key is highest priority
 	if value, exists := bucketMap["*"]; exists {
-		log.Debug(" Global KMS Key entry exists with value:", value)
+		log.Debugf("Global KMS Key entry exists with value: %v", value)
 		return value
 	}
 	// If Global key , then check other bucket to KMS key mapping
 	if value, exists := bucketMap[bucketName]; exists {
-		log.Debug(" KMS Key entry exists with value:", value)
+		log.Debugf(" KMS Key entry exists with value: %v", value)
 		return value
 	} else {
 		log.Debug("KMS key entry does not exist")
@@ -49,8 +49,7 @@ func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string{
 		}
 	bucketName:= strings.Split(bucketNamePath,"/")[0] 
 
-	log.Debug("In BucketName Multipart Upload")
-	log.Debug(bucketName)
+	log.Debug("In Multipart Upload for bucket name: %v",bucketName)
 	return bucketName
 }
 
@@ -97,8 +96,7 @@ func getBucketNameFromRequestUri(urlPath string)string{
 	
 	// Adding this because there might be a path for bucket, so grabbing only bucket name
 	bucketName := strings.Split(res[0],"/")[0] 
-	log.Debug("In BucketName Simple Download")
-	log.Debug(bucketName)
+	log.Debug("In Multipart Upload for bucket name: %v",bucketName)
 	return bucketName
 }
 //f.Request.URL.Path
