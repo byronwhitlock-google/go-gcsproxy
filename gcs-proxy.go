@@ -48,6 +48,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 	if getKMSKeyName(bucketName)==""{
 		return passThru
 	}
+
 	if f.Request.URL.Host == "storage.googleapis.com" {
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
@@ -92,6 +93,9 @@ func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
+
+	log.Debug(fmt.Sprintf("got request: %s", f.Request))
+
 	if IsEncryptDisabled() {
 		return
 	}
@@ -135,6 +139,8 @@ out:
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	var err error
+
+	log.Debug(fmt.Sprintf("got response: %s", f.Response.Body))
 
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
 		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))

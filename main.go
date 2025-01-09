@@ -62,7 +62,11 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	if config.KmsBucketKeyMapping != ""{
+	if config.KmsBucketKeyMapping == ""{
+		fmt.Printf("\n>>> Please provide KMS Bucket Map.")
+		os.Exit(0)
+		
+	}else {
 		err := CheckKmsBucketKeyMapping()
 		if err != nil {
 			fmt.Printf("\n>>> unable to initialize KmsBucketKeyMapping. %v", err)
