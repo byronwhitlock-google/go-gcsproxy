@@ -21,22 +21,14 @@ import (
 func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// URL change to use Multipart
-
-	//objectName:=f.Request.URL.Query().Get("name")   // path + objectName
-	//f.Request.URL.Query().Set("alt","json")
-	//f.Request.URL.Query().Del("name")
-	//f.Request.URL.Query().Set("uploadType","multipart")
 	objectName := f.Request.URL.Query().Get("name")
 	f.Request.URL.RawQuery = "uploadType=multipart&alt=json"
 
 	//  Store original headers in variables, useful for generating metadata
 	orgContentType := f.Request.Header.Get("Content-Type")
 
-	log.Debug("in ConvertSinglePartUploadtoMultiPartUpload orgContentType")
-	log.Debug(orgContentType)
-
-	log.Debug("Changing Method to POST")
 	f.Request.Method = "POST"
+	log.Debugf("ConvertSinglePartUploadtoMultiPartUpload orgContentType: %v. Method changed to ", orgContentType, f.Request.Method)
 
 	//  Change headers to use multipart
 	headersMap, boundary := generateHeadersList(f)
@@ -53,16 +45,16 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
 	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		base64_md5hash(f.Request.Body))
+		Base64MD5Hash(f.Request.Body))
 
 	f.Request.Header.Del("Expect")
 
 	// Generate Metadata to insert in body
 	metadata := generateMetadata(f, orgContentType, objectName)
-	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
 
 	// Encrypt data in body
-	encryptBody, err := encryptBytes(f.Request.Raw().Context(),
+	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
+	encryptBody, err := EncryptBytes(f.Request.Raw().Context(),
 		getKMSKeyName(bucketName),
 		f.Request.Body)
 	if err != nil {
@@ -101,15 +93,12 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 }
 
 func HandleSinglePartUploadResponse(f *proxy.Flow) error {
-	log.Debug("in HandleMultipartResponse")
-
 	var jsonResponse map[string]interface{}
 	// turn the response body into a dynamic json map we can use
 	err := json.Unmarshal(f.Response.Body, &jsonResponse)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
-	log.Debug(jsonResponse)
 
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("Gcs-proxy-original-md5-hash")
@@ -118,11 +107,40 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error setting json response: %v", err)
 	}
 
+	log.Debugf("HandleSinglePartUploadResponse response with original size and md5: %v", jsonResponse)
 	jsonData, err := json.Marshal(jsonResponse)
 	if err != nil {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
 
 	f.Response.Body = jsonData
+	return nil
+}
+
+func HandleSinglePartUploadRequest(f *proxy.Flow) error {
+	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
+	encryptedData, err := EncryptBytes(f.Request.Raw().Context(),
+		getKMSKeyName(bucketName),
+		f.Request.Body)
+
+	if err != nil {
+		return fmt.Errorf("error encrypting  request: %v", err)
+	}
+
+	f.Request.Header.Set("gcs-proxy-original-content-length",
+		f.Request.Header.Get("Content-Length"))
+
+	f.Request.Header.Set("Content-Length",
+		strconv.Itoa(len(encryptedData)))
+
+	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
+	f.Request.Header.Set("gcs-proxy-original-md5-hash",
+		Base64MD5Hash(f.Request.Body))
+
+	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
+		strconv.Itoa(len(f.Request.Body)))
+
+	f.Request.Body = encryptedData
+
 	return nil
 }

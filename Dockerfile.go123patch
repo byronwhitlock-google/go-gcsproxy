@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.23 as builder
+FROM golang:1.23 as gopatch
 
 # Patching go std net/http
 COPY test/go-net-http-patch/transfer.go /tmp 
@@ -12,6 +12,8 @@ RUN cd ./src && ./make.bash
 
 # Add the patched Go binaries to PATHß
 ENV PATH /usr/local/go-src/bin:$PATH
+
+FROM gopatch as builder
 
 # Set destination for COPY
 WORKDIR /app
