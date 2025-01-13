@@ -109,8 +109,11 @@ GKE Cluster Configurations include a main Flask application (with 2 vCPU and 8 G
     - Encryption/decryption become less significant: While these also take time, they don't increase as dramatically as upload/download with larger files. This means encryption/decryption make up a smaller portion of the total time for big files.
     - Large files can cause OOM: 1GB files caused errors due to system limitations (running out of memory) on an 8 GB system, leading to failed requests. 500MB files worked fine with the same system resources.
     - A 10GB file was uploaded on a 32vcpu / 128 GB memory machine without failure.
+![1-r](https://github.com/user-attachments/assets/3e8ed2cd-29a6-441b-8e3a-9c2cc435eb06)
+![2-r](https://github.com/user-attachments/assets/201bd5dc-5e5c-4d43-a5c8-c9d194509d00)
 
 * The following graph compares upload and download performance of a GCS object with and without a proxy. Tests used varying file sizes, consistent server resources (2 vCPUs and 8 GB memory), and two concurrency combinations. Results show minimal latency differences between proxy and no-proxy configurations for files under 500 MB. However, for larger files (>500 MB), the latency difference increases significantly.
+![3-r](https://github.com/user-attachments/assets/6e42b4a3-41e0-4667-b825-d6bd629e9aee)
 
 * **Proxy Overhead:** The proxy introduces latency, as expected. Upload latency with the proxy is generally higher than without it (e.g., row 3: 6.15 seconds vs. 2.32 seconds for 1MB file, 500 users). Download latency with the proxy is also consistently higher than without it.
 * **Resource Scaling:** 
