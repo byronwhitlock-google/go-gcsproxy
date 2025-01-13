@@ -1,0 +1,943 @@
+***** initial run ***** 
++ export OUTPUT_DIR=gs://eshen-axlearn/fuji-without-gcs-proxy-2
++ OUTPUT_DIR=gs://eshen-axlearn/fuji-without-gcs-proxy-2
++ export DATA_DIR=gs://axlearn-public/tensorflow_datasets
++ DATA_DIR=gs://axlearn-public/tensorflow_datasets
++ export CONFIG=fuji-7B-s1-b32
++ CONFIG=fuji-7B-s1-b32
++ export SAVE_EVERY_N_STEPS=100
++ SAVE_EVERY_N_STEPS=100
++ [[ -n '' ]]
++ python3 -m axlearn.common.launch_trainer_main --module=gke_fuji --config=fuji-7B-s1-b32 --trainer_dir=gs://eshen-axlearn/fuji-without-gcs-proxy-2 --data_dir=gs://axlearn-public/tensorflow_datasets --jax_backend=tpu
+jax version=0.4.34
+WARNING:absl:grain is not installed. Will not be able to checkpoint grain iterators.
+I0107 18:36:08.922412 133131071646592 measurement.py:92] No recorder type specified, skipping initialize().
+I0107 18:36:08.922526 133131071646592 launch.py:110] LIBTPU_INIT_FLAGS was not set. Reason: Invalid TPU instance: none
+I0107 18:36:11.965232 133131071646592 distributed.py:106] Starting JAX distributed service on [::]:8476
+I0107 18:36:11.967926 133131071646592 distributed.py:119] Connecting to JAX distributed service on fuji-multihost-job-gcs-proxy-slice-0-0.fuji-multihost-job-gcs-proxy:8476
+I0107 18:36:18.394790 133131071646592 launch.py:132] Devices: [TpuDevice(id=0, process_index=0, coords=(0,0,0), core_on_chip=0), TpuDevice(id=1, process_index=0, coords=(1,0,0), core_on_chip=0), TpuDevice(id=2, process_index=0, coords=(0,1,0), core_on_chip=0), TpuDevice(id=3, process_index=0, coords=(1,1,0), core_on_chip=0), TpuDevice(id=4, process_index=1, coords=(0,0,1), core_on_chip=0), TpuDevice(id=5, process_index=1, coords=(1,0,1), core_on_chip=0), TpuDevice(id=6, process_index=1, coords=(0,1,1), core_on_chip=0), TpuDevice(id=7, process_index=1, coords=(1,1,1), core_on_chip=0), TpuDevice(id=8, process_index=2, coords=(0,0,2), core_on_chip=0), TpuDevice(id=9, process_index=2, coords=(1,0,2), core_on_chip=0), TpuDevice(id=10, process_index=2, coords=(0,1,2), core_on_chip=0), TpuDevice(id=11, process_index=2, coords=(1,1,2), core_on_chip=0), TpuDevice(id=12, process_index=3, coords=(0,0,3), core_on_chip=0), TpuDevice(id=13, process_index=3, coords=(1,0,3), core_on_chip=0), TpuDevice(id=14, process_index=3, coords=(0,1,3), core_on_chip=0), TpuDevice(id=15, process_index=3, coords=(1,1,3), core_on_chip=0)]
+I0107 18:36:18.395025 133131071646592 launch.py:134] Local Devices: [TpuDevice(id=0, process_index=0, coords=(0,0,0), core_on_chip=0), TpuDevice(id=1, process_index=0, coords=(1,0,0), core_on_chip=0), TpuDevice(id=2, process_index=0, coords=(0,1,0), core_on_chip=0), TpuDevice(id=3, process_index=0, coords=(1,1,0), core_on_chip=0)]
+I0107 18:36:18.395137 133131071646592 launch.py:140] DATA_DIR=gs://axlearn-public/tensorflow_datasets
+I0107 18:36:20.337225 133131071646592 measurement.py:120] No recorder configured, ignoring events.
+I0107 18:36:20.342154 133131071646592 launch_trainer.py:125] Trainer config:
+batch_axis_names[0]: 'data'
+batch_axis_names[1]: 'expert'
+batch_axis_names[2]: 'fsdp'
+batch_axis_names[3]: 'seq'
+checkpointer.gc_loop_interval_seconds: 60
+checkpointer.keep_every_n_steps: 10000
+checkpointer.keep_last_n: 3
+checkpointer.klass: 'axlearn.common.checkpointer.Checkpointer'
+checkpointer.save_policy.fn: 'axlearn.common.checkpointer.every_n_steps_policy'
+checkpointer.save_policy.min_step: 1
+checkpointer.save_policy.n: 100
+checkpointer.storage.klass: 'axlearn.common.checkpointer.TensorStoreStateStorage'
+checkpointer.storage.timeout_secs: 3600
+dir: 'gs://eshen-axlearn/fuji-without-gcs-proxy-2'
+evalers['train'].eval_dtype: 'jax.numpy.bfloat16'
+evalers['train'].eval_policy.fn: 'axlearn.common.evaler.every_n_steps_policy'
+evalers['train'].eval_policy.min_step: 1
+evalers['train'].eval_policy.n: 2000
+evalers['train'].input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+evalers['train'].input.batcher.global_batch_size: 32
+evalers['train'].input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+evalers['train'].input.batcher.prefetch_buffer_size: -1
+evalers['train'].input.is_training: False
+evalers['train'].input.klass: 'axlearn.common.input_tf_data.Input'
+evalers['train'].input.processor.fn: 'axlearn.common.input_tf_data.identity'
+evalers['train'].input.source.dataset_name: 'c4/en:3.0.1'
+evalers['train'].input.source.fn: 'axlearn.experiments.text.gpt.common.tfds_input'
+evalers['train'].input.source.is_training: False
+evalers['train'].input.source.max_sequence_length: 2048
+evalers['train'].input.source.replace_newlines_with: '\n'
+evalers['train'].input.source.split: 'train[:8192]'
+evalers['train'].input.source.train_shuffle_buffer_size: 16384
+evalers['train'].input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+evalers['train'].input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+evalers['train'].klass: 'axlearn.common.evaler.SpmdEvaler'
+evalers['train'].metric_calculator.klass: 'axlearn.common.evaler.ModelSummaryAccumulator'
+evalers['train'].metric_calculator.metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+evalers['train'].metric_calculator.model_method: 'forward'
+evalers['train'].summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+evalers['train'].summary_writer.write_every_n_steps: 1
+evalers['validation'].eval_dtype: 'jax.numpy.bfloat16'
+evalers['validation'].eval_policy.fn: 'axlearn.common.evaler.every_n_steps_policy'
+evalers['validation'].eval_policy.min_step: 1
+evalers['validation'].eval_policy.n: 2000
+evalers['validation'].input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+evalers['validation'].input.batcher.global_batch_size: 32
+evalers['validation'].input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+evalers['validation'].input.batcher.prefetch_buffer_size: -1
+evalers['validation'].input.is_training: False
+evalers['validation'].input.klass: 'axlearn.common.input_tf_data.Input'
+evalers['validation'].input.processor.fn: 'axlearn.common.input_tf_data.identity'
+evalers['validation'].input.source.dataset_name: 'c4/en:3.0.1'
+evalers['validation'].input.source.fn: 'axlearn.experiments.text.gpt.common.tfds_input'
+evalers['validation'].input.source.is_training: False
+evalers['validation'].input.source.max_sequence_length: 2048
+evalers['validation'].input.source.replace_newlines_with: '\n'
+evalers['validation'].input.source.split: 'validation'
+evalers['validation'].input.source.train_shuffle_buffer_size: 16384
+evalers['validation'].input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+evalers['validation'].input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+evalers['validation'].klass: 'axlearn.common.evaler.SpmdEvaler'
+evalers['validation'].metric_calculator.klass: 'axlearn.common.evaler.ModelSummaryAccumulator'
+evalers['validation'].metric_calculator.metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+evalers['validation'].metric_calculator.model_method: 'forward'
+evalers['validation'].summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+evalers['validation'].summary_writer.write_every_n_steps: 1
+input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+input.batcher.global_batch_size: 32
+input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+input.batcher.prefetch_buffer_size: -1
+input.is_training: True
+input.klass: 'axlearn.common.input_tf_data.Input'
+input.processor.fn: 'axlearn.common.input_tf_data.identity'
+input.source.data_mixture_components[0]['name']: 'c4/en:3.0.1'
+input.source.data_mixture_components[0]['weight']: 1.0
+input.source.data_mixture_components[0]['shuffle_buffer_size']: 8192
+input.source.data_mixture_components[0]['split']: 'train'
+input.source.data_mixture_components[0]['info']: ''
+input.source.fn: 'axlearn.experiments.text.gpt.common.mixture_train_input_source'
+input.source.max_sequence_length: 2048
+input.source.preprocessor.fn: 'axlearn.common.input_lm.lm_text_preprocessor'
+input.source.preprocessor.max_padding_fraction: 0.5
+input.source.preprocessor.shuffle_buffer_size: 8192
+input.source.preprocessor.window_size: 128
+input.source.replace_newlines_with: '<n>'
+input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+klass: 'axlearn.common.trainer.SpmdTrainer'
+learner.ema.fn: 'axlearn.common.optimizers.param_ema'
+learner.enable_per_variable_summaries: False
+learner.klass: 'axlearn.common.learner.Learner'
+learner.optimizer.args[0].eps: 1e-08
+learner.optimizer.args[0].fn: 'axlearn.common.optimizers.clip_by_global_norm'
+learner.optimizer.args[0].max_norm: 1
+learner.optimizer.args[1].b1: 0.9
+learner.optimizer.args[1].b2: 0.95
+learner.optimizer.args[1].eps: 1e-08
+learner.optimizer.args[1].fn: 'axlearn.common.optimizers.adamw_decoupled_optimizer'
+learner.optimizer.args[1].learning_rate: 0.0003
+learner.optimizer.args[1].update_schedule.alpha: 0.1
+learner.optimizer.args[1].update_schedule.begin_value: 0.0
+learner.optimizer.args[1].update_schedule.fn: 'axlearn.common.schedule.cosine_with_linear_warmup'
+learner.optimizer.args[1].update_schedule.max_step: 262144
+learner.optimizer.args[1].update_schedule.peak_lr: 1.0
+learner.optimizer.args[1].update_schedule.warmup_steps: 2000
+learner.optimizer.args[1].weight_decay: 0.1
+learner.optimizer.fn: 'axlearn.common.optimizers.chain'
+max_step: 50000
+mesh_axis_names[0]: 'pipeline'
+mesh_axis_names[1]: 'data'
+mesh_axis_names[2]: 'expert'
+mesh_axis_names[3]: 'fsdp'
+mesh_axis_names[4]: 'seq'
+mesh_axis_names[5]: 'model'
+mesh_rules[0][0]: 'tpu-v4-(1024|2048)'
+mesh_rules[0][1][0]: 1
+mesh_rules[0][1][1]: -1
+mesh_rules[0][1][2]: 1
+mesh_rules[0][1][3]: 16
+mesh_rules[0][1][4]: 1
+mesh_rules[0][1][5]: 1
+mesh_rules[1][0]: 'tpu-v5litepod-256'
+mesh_rules[1][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[1][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[1][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[1][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].fn: 'axlearn.common.utils.offload_dots_saveable'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_dst: 'pinned_host'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_src: 'device'
+mesh_rules[1][1].config_modifiers[2].grad_acc_steps: 4
+mesh_rules[1][1].config_modifiers[2].klass: 'axlearn.common.trainer_config_modifier.GradientAccumulationModifier'
+mesh_rules[1][1].config_modifiers[2].metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+mesh_rules[1][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[2][0]: 'tpu-v5litepod-256-2'
+mesh_rules[2][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[2][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[2][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[2][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].fn: 'axlearn.common.utils.offload_dots_saveable'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_dst: 'pinned_host'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_src: 'device'
+mesh_rules[2][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[3][0]: 'tpu-v5litepod-256-4'
+mesh_rules[3][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[3][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[3][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[3][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[3][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[3][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy']: 'jax._src.ad_checkpoint.dots_saveable'
+mesh_rules[3][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[4][0]: 'tpu-v5p-.*'
+mesh_rules[4][1][0]: 1
+mesh_rules[4][1][1]: -1
+mesh_rules[4][1][2]: 1
+mesh_rules[4][1][3]: 8
+mesh_rules[4][1][4]: 1
+mesh_rules[4][1][5]: 1
+mesh_rules[5][0]: 'gpu-(p5.48xlarge|p4de.24xlarge|a3-highgpu-8g)-(256|512|1024)'
+mesh_rules[5][1][0]: 1
+mesh_rules[5][1][1]: -1
+mesh_rules[5][1][2]: 1
+mesh_rules[5][1][3]: 8
+mesh_rules[5][1][4]: 1
+mesh_rules[5][1][5]: 1
+mesh_shape[0]: 1
+mesh_shape[1]: 1
+mesh_shape[2]: 1
+mesh_shape[3]: 16
+mesh_shape[4]: 1
+mesh_shape[5]: 1
+model.batch_axis_names[0]: 'data'
+model.batch_axis_names[1]: 'expert'
+model.batch_axis_names[2]: 'fsdp'
+model.decoder.attention_mask: None
+model.decoder.decoding.klass: 'axlearn.common.decoder.DecodingLayer'
+model.decoder.dim: 4096
+model.decoder.dropout_rate: 0.0
+model.decoder.emb.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.emb.klass: 'axlearn.common.embedding.TransformerTextEmbeddings'
+model.decoder.emb.token_emb.klass: 'axlearn.common.layers.Embedding'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].distribution: 'normal'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].fan: 'fan_out'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].klass: 'axlearn.common.param_init.WeightInitializer'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].scale: 1.0
+model.decoder.emb.token_emb.param_init.klass: 'axlearn.common.param_init.DefaultInitializer'
+model.decoder.emb.token_emb.param_partition_spec[0]: None
+model.decoder.emb.token_emb.param_partition_spec[1]: 'model'
+model.decoder.eos_token_id: 1
+model.decoder.klass: 'axlearn.common.decoder.Decoder'
+model.decoder.logits_partition_spec[0][0]: 'data'
+model.decoder.logits_partition_spec[0][1]: 'expert'
+model.decoder.logits_partition_spec[0][2]: 'fsdp'
+model.decoder.logits_partition_spec[1]: 'seq'
+model.decoder.logits_partition_spec[2]: 'model'
+model.decoder.output_dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.output_norm.eps: 1e-05
+model.decoder.output_norm.forward_dtype: None
+model.decoder.output_norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.pad_token_id: 0
+model.decoder.transformer.klass: 'axlearn.common.attention.RepeatedTransformerLayer'
+model.decoder.transformer.layer.feed_forward.activation[0]: 'nn.silu'
+model.decoder.transformer.layer.feed_forward.activation[1]: 'linear'
+model.decoder.transformer.layer.feed_forward.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.feed_forward.hidden_dim.fn: 'axlearn.experiments.text.gpt.common.scale_fn'
+model.decoder.transformer.layer.feed_forward.hidden_dim.round_up_to_multiples_of: 256
+model.decoder.transformer.layer.feed_forward.hidden_dim.scale: 2.6666666666666665
+model.decoder.transformer.layer.feed_forward.klass: 'axlearn.common.attention.TransformerFeedForwardLayer'
+model.decoder.transformer.layer.feed_forward.linear1.bias: False
+model.decoder.transformer.layer.feed_forward.linear1.klass: 'axlearn.common.layers.Linear'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][0]: 'data'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][1]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][2]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[1]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[2]: 'model'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.bias: False
+model.decoder.transformer.layer.feed_forward.linear2.klass: 'axlearn.common.layers.Linear'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][0]: 'data'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][1]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][2]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[1]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[2]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[0]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][0]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][1]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][2]: 'seq'
+model.decoder.transformer.layer.feed_forward.norm.eps: 1e-05
+model.decoder.transformer.layer.feed_forward.norm.forward_dtype: None
+model.decoder.transformer.layer.feed_forward.norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.transformer.layer.feed_forward.residual_weight: 1.0
+model.decoder.transformer.layer.feed_forward.stochastic_depth.klass: 'axlearn.common.layers.StochasticDepth'
+model.decoder.transformer.layer.feed_forward.stochastic_depth.mode: 'row'
+model.decoder.transformer.layer.feed_forward.structure: 'prenorm'
+model.decoder.transformer.layer.klass: 'axlearn.common.attention.TransformerLayer'
+model.decoder.transformer.layer.remat_spec['prevent_cse']: False
+model.decoder.transformer.layer.remat_spec['policy'].fn: 'jax._src.ad_checkpoint.save_only_these_names'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[0]: 'MultiheadAttention.q_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[1]: 'MultiheadAttention.k_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[2]: 'MultiheadAttention.v_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[3]: 'MultiheadAttention.context'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[4]: 'MultiheadAttention.o_proj'
+model.decoder.transformer.layer.self_attention.attention.causal: True
+model.decoder.transformer.layer.self_attention.attention.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.self_attention.attention.input_linear.cache_dtype: 'jax.numpy.bfloat16'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.cache_dtype: 'jax.numpy.bfloat16'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.klass: 'axlearn.common.attention.FusedQKVLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.bias: False
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.klass: 'axlearn.common.attention.MultiheadInputLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[2]: None
+model.decoder.transformer.layer.self_attention.attention.input_linear.klass: 'axlearn.common.attention.RoFormerQKVLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.rope_pos_emb_layer.klass: 'axlearn.common.attention.RoFormerSinusoidalPositionalEmbedding'
+model.decoder.transformer.layer.self_attention.attention.input_linear.rope_pos_emb_layer.theta: 10000.0
+model.decoder.transformer.layer.self_attention.attention.input_linear.rotary_value: False
+model.decoder.transformer.layer.self_attention.attention.key_scale.klass: 'axlearn.common.attention.ScaleKey'
+model.decoder.transformer.layer.self_attention.attention.klass: 'axlearn.common.attention.MultiheadAttention'
+model.decoder.transformer.layer.self_attention.attention.num_heads: 32
+model.decoder.transformer.layer.self_attention.attention.output_linear.bias: False
+model.decoder.transformer.layer.self_attention.attention.output_linear.klass: 'axlearn.common.attention.MultiheadOutputLinear'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[2]: None
+model.decoder.transformer.layer.self_attention.attention.query_scale.klass: 'axlearn.common.attention.ScaleQuery'
+model.decoder.transformer.layer.self_attention.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.self_attention.klass: 'axlearn.common.attention.TransformerAttentionLayer'
+model.decoder.transformer.layer.self_attention.norm.eps: 1e-05
+model.decoder.transformer.layer.self_attention.norm.forward_dtype: None
+model.decoder.transformer.layer.self_attention.norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.transformer.layer.self_attention.stochastic_depth.klass: 'axlearn.common.layers.StochasticDepth'
+model.decoder.transformer.layer.self_attention.stochastic_depth.mode: 'row'
+model.decoder.transformer.layer.self_attention.structure: 'prenorm'
+model.decoder.transformer.num_layers: 32
+model.decoder.transformer.repeat.drop_output.fn: 'axlearn.common.repeat._drop_by_regex'
+model.decoder.transformer.repeat.drop_output.rules[0]: 'module_outputs.*'
+model.decoder.transformer.repeat.klass: 'axlearn.common.attention._TransformerRepeat'
+model.decoder.vocab_size: 32768
+model.dtype: 'jax.numpy.float32'
+model.klass: 'axlearn.common.causal_lm.Model'
+model.param_init.init_by_param_name['.*weight$'].distribution: 'normal'
+model.param_init.init_by_param_name['.*weight$'].fan: 'fan_in'
+model.param_init.init_by_param_name['.*weight$'].klass: 'axlearn.common.param_init.WeightInitializer'
+model.param_init.init_by_param_name['.*weight$'].scale: 1.0
+model.param_init.klass: 'axlearn.common.param_init.DefaultInitializer'
+model.seq_axis_names[0]: 'seq'
+model.z_loss_scale: 0.0
+name: 'gpt_trainer'
+prune_empty_state_updates: True
+recorder.fn: '__main__.<lambda>'
+save_input_iterator: False
+start_trace_process_indices[0]: 0
+summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+summary_writer.max_queue: 1000
+summary_writer.write_every_n_steps: 100
+train_dtype: 'jax.numpy.bfloat16'
+watchdog_timeout_seconds: 3600
+I0107 18:36:20.921316 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Devices: global=16 local=4 ['tpu', 'tpu', 'tpu', 'tpu']
+I0107 18:36:20.921421 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Mesh shape: (1, 1, 1, 16, 1, 1)
+I0107 18:36:20.921560 133131071646592 utils.py:1247] Inferred intra-slice/granule mesh shape: (1, 1, 1, 16, 1, 1)
+I0107 18:36:20.921733 133131071646592 utils.py:1250] Inferred inter-slice/granule mesh shape: (1, 1, 1, 1, 1, 1)
+I0107 18:36:20.921775 133131071646592 utils.py:1261] Using hybrid mesh shape: HybridMeshShape(ici_mesh_shape=(1, 1, 1, 16, 1, 1), dcn_mesh_shape=(1, 1, 1, 1, 1, 1)).
+I0107 18:36:20.922129 133131071646592 utils.py:1099] Building device mesh.
+I0107 18:36:20.922645 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Global mesh: Mesh('pipeline': 1, 'data': 1, 'expert': 1, 'fsdp': 16, 'seq': 1, 'model': 1)
+I0107 18:36:21.515236 133131071646592 dataset_info.py:690] Load dataset info from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 18:36:21.982982 133131071646592 dataset_info.py:780] For 'c4/en/3.0.1': fields info.[splits] differ on disk and in the code. Keeping the one from code.
+I0107 18:36:22.105258 133131071646592 reader.py:261] Creating a tf.data.Dataset reading 1024 files located in folders: gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1.
+I0107 18:36:22.220600 133131071646592 logging_logger.py:49] Constructing tf.data.Dataset c4 for split train, from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 18:36:25.027640 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/emb/token_emb/weight=ParameterSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'), initializer=None, factorization=None, fan_axes=FanAxes(in_axis=-2, out_axis=-1, batch_axis=()), weight_decay_scale=None)
+I0107 18:36:25.027804 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/output_norm/scale=ParameterSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:25.027858 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:25.027912 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:25.027962 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear2/weight=ParameterSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:25.028015 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/norm/scale=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:25.028059 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=ParameterSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2,), out_axis=(3, 4), batch_axis=(0, 1)), weight_decay_scale=None)
+I0107 18:36:25.028114 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=ParameterSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2, 3), out_axis=(1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:25.028168 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/norm/scale=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:25.029368 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/count=TensorSpec(shape=(), dtype=dtype('int32'), mesh_axes=PartitionSpec())
+I0107 18:36:25.029476 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/emb/token_emb/weight=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 18:36:25.029525 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/output_norm/scale=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 18:36:25.029575 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:25.029622 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:25.029669 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 18:36:25.029712 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:25.029758 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:25.029812 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:25.029859 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:25.029904 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/emb/token_emb/weight=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 18:36:25.029949 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/output_norm/scale=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 18:36:25.029994 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:25.030040 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:25.030085 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 18:36:25.030130 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:25.030175 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:25.030249 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:25.030297 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:25.030342 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/1/count=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 18:36:25.030387 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/3/count=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 18:36:26.926799 133131071646592 dataset_info.py:690] Load dataset info from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 18:36:27.427078 133131071646592 dataset_info.py:780] For 'c4/en/3.0.1': fields info.[splits] differ on disk and in the code. Keeping the one from code.
+I0107 18:36:27.493128 133131071646592 reader.py:261] Creating a tf.data.Dataset reading 1024 files located in folders: gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1.
+I0107 18:36:27.533476 133131071646592 logging_logger.py:49] Constructing tf.data.Dataset c4 for split train, from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 18:36:27.887691 133131071646592 checkpointer.py:1110] Could not find any completed checkpoints under gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints
+I0107 18:36:27.922361 133131071646592 trainer.py:356] gpt_trainer process   0 step       -1] Initializing trainer state.
+I0107 18:36:27.929242 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_out' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:27.960711 133131071646592 param_init.py:413] DefaultInitializer: .*scale$ matches scale: initializer=klass: 'axlearn.common.param_init.ConstantInitializer' value: 1.0
+I0107 18:36:27.974349 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_in' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:27.996260 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_in' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:28.012634 133131071646592 param_init.py:413] DefaultInitializer: .*scale$ matches scale: initializer=klass: 'axlearn.common.param_init.ConstantInitializer' value: 1.0
+I0107 18:36:28.019203 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_in' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:28.035249 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_in' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:28.042382 133131071646592 param_init.py:413] DefaultInitializer: .*weight$ matches weight: initializer=distribution: 'normal' fan: 'fan_in' klass: 'axlearn.common.param_init.WeightInitializer' scale: 1.0
+I0107 18:36:28.058268 133131071646592 param_init.py:413] DefaultInitializer: .*scale$ matches scale: initializer=klass: 'axlearn.common.param_init.ConstantInitializer' value: 1.0
+I0107 18:36:46.689232 133131071646592 evaler.py:542] Skipping eval, as step (0) < min_step (1).
+I0107 18:36:46.691419 133131071646592 evaler.py:542] Skipping eval, as step (0) < min_step (1).
+I0107 18:36:46.693583 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] ##################### Model analysis #####################
+
+I0107 18:36:46.693657 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] ## Parameters:
+I0107 18:36:46.693981 133131071646592 trainer.py:356] gpt_trainer process   0 step        0]  134217728 [32768, 4096]        decoder/emb/token_emb/weight
+I0107 18:36:46.694064 133131071646592 trainer.py:356] gpt_trainer process   0 step        0]       4096 [4096]               decoder/output_norm/scale
+I0107 18:36:46.694123 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 1442840576 (32, 4096, 11008)    decoder/transformer/repeat/layer/feed_forward/linear1_0/weight
+I0107 18:36:46.694204 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 1442840576 (32, 4096, 11008)    decoder/transformer/repeat/layer/feed_forward/linear1_1/weight
+I0107 18:36:46.694271 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 1442840576 (32, 11008, 4096)    decoder/transformer/repeat/layer/feed_forward/linear2/weight
+I0107 18:36:46.694332 133131071646592 trainer.py:356] gpt_trainer process   0 step        0]     131072 (32, 4096)           decoder/transformer/repeat/layer/feed_forward/norm/scale
+I0107 18:36:46.694394 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 1610612736 (32, 3, 4096, 32, 128) decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight
+I0107 18:36:46.694456 133131071646592 trainer.py:356] gpt_trainer process   0 step        0]  536870912 (32, 4096, 32, 128)  decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight
+I0107 18:36:46.694518 133131071646592 trainer.py:356] gpt_trainer process   0 step        0]     131072 (32, 4096)           decoder/transformer/repeat/layer/self_attention/norm/scale
+I0107 18:36:46.694572 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] Total number of model params: 6,610,489,344
+I0107 18:36:47.097997 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 
+## Trainer States:
+I0107 18:36:47.099761 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: prng_key=uint32((4,)) mesh_axes=ParameterSpec(shape=[4], dtype=<class 'jax.numpy.uint32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:47.099925 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=ParameterSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'), initializer=None, factorization=None, fan_axes=FanAxes(in_axis=-2, out_axis=-1, batch_axis=()), weight_decay_scale=None)
+I0107 18:36:47.100037 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/output_norm/scale=float32((4096,)) mesh_axes=ParameterSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:47.100123 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:47.100237 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:47.100332 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=ParameterSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:47.100420 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:47.100503 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=ParameterSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2,), out_axis=(3, 4), batch_axis=(0, 1)), weight_decay_scale=None)
+I0107 18:36:47.100601 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=ParameterSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2, 3), out_axis=(1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 18:36:47.100691 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: model/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 18:36:47.100770 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/count=int32(()) mesh_axes=TensorSpec(shape=(), dtype=dtype('int32'), mesh_axes=PartitionSpec())
+I0107 18:36:47.100873 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 18:36:47.100953 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/output_norm/scale=float32((4096,)) mesh_axes=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 18:36:47.101038 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:47.101117 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:47.101214 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 18:36:47.101296 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:47.101380 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:47.101462 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:47.101541 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:47.101617 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 18:36:47.101694 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/output_norm/scale=float32((4096,)) mesh_axes=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 18:36:47.101775 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:47.101853 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 18:36:47.101929 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 18:36:47.102013 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:47.102088 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:47.102166 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 18:36:47.102265 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 18:36:47.102350 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/1/count=int32(()) mesh_axes=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 18:36:47.102424 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] State: learner/optimizer/1/3/count=int32(()) mesh_axes=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 18:36:47.229177 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] Training state size: 73.88 GiB
+Training state size (partitioned): 6.03 GiB
+Max training state size (partitioned): 6.03 GiB
+I0107 18:36:47.229357 133131071646592 trainer.py:356] gpt_trainer process   0 step        0] 
+##########################################################
+I0107 18:36:48.108989 133131071646592 trainer.py:553] Starting loop...
+I0107 18:37:17.457805 133131071646592 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 18:37:17.539700 133131071646592 base_layer.py:337] Applying remat on gpt_trainer.model.decoder.transformer.repeat.layer.<function TransformerLayer.forward at 0x78f72c0ef490>: RematSpec(prevent_cse=False, policy=config_for_function(jax._src.ad_checkpoint.save_only_these_names)(fn=<function save_only_these_names at 0x79144f27fb50>, names_which_can_be_saved=['MultiheadAttention.q_proj', 'MultiheadAttention.k_proj', 'MultiheadAttention.v_proj', 'MultiheadAttention.context', 'MultiheadAttention.o_proj']))
+I0107 18:37:30.977943 133131071646592 trainer.py:356] gpt_trainer process   0 step        1] loss=10.866682 aux={}
+I0107 18:37:32.991144 133131071646592 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 18:37:32.998611 133131071646592 trainer.py:356] gpt_trainer process   0 step        2] loss=10.8794155 aux={}
+I0107 18:37:35.019981 133131071646592 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 18:37:35.027412 133131071646592 trainer.py:356] gpt_trainer process   0 step        3] loss=10.848944 aux={}
+I0107 18:37:37.076633 133131071646592 trainer.py:356] gpt_trainer process   0 step        4] loss=10.837767 aux={}
+I0107 18:37:39.092869 133131071646592 trainer.py:356] gpt_trainer process   0 step        5] loss=10.77331 aux={}
+I0107 18:37:48.373401 132908442420928 checkpointer.py:1054] Garbage collection done on gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints. Remaining=[]
+I0107 18:39:47.064877 133131071646592 trainer.py:356] gpt_trainer process   0 step      100] loss=7.34579 aux={}
+I0107 18:40:51.808228 133131071646592 array_serialization.py:367] Waiting for previous serialization to finish.
+I0107 18:40:51.808442 133131071646592 serialization.py:589] Error check finished successfully
+I0107 18:40:51.815862    2942 google_auth_provider.cc:181] Running on GCE, using service account 35800850492-compute@developer.gserviceaccount.com
+I0107 18:41:13.586029 132890977355456 serialization.py:531] Starting commit to storage layer by process: 0
+I0107 18:41:13.588227 133131071646592 trainer.py:356] gpt_trainer process   0 step      100] Average step time: 2.6547901232099687 seconds
+I0107 18:43:22.428750 132890977355456 serialization.py:536] Finished committing to storage layer by process: 0
+I0107 18:43:22.429086 132890977355456 serialization.py:543] Key used for barrier is tensorstore_checkpoint_0 for process 0
+I0107 18:43:22.430308 132890977355456 serialization.py:546] Finished waiting at barrier for process 0
+I0107 18:43:22.430428 132890977355456 checkpointer.py:288] Writing index file to gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000100/index
+I0107 18:43:22.692554 132890977355456 checkpointer.py:510] Serialization of gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000100 completed in 150.953270582002 seconds.
+I0107 18:43:22.692634 132890977355456 serialization.py:551] on_commit_callback successfully ran!
+I0107 18:43:22.693355 132890977355456 serialization.py:554] Process 0 successfully set key tensorstore_checkpoint_0 in the kv store
+I0107 18:43:29.828087 133131071646592 trainer.py:356] gpt_trainer process   0 step      200] loss=7.7641706 aux={}
+I0107 18:44:34.595774 133131071646592 array_serialization.py:367] Waiting for previous serialization to finish.
+I0107 18:44:34.595997 133131071646592 serialization.py:586] Thread joined successfully
+I0107 18:44:34.596045 133131071646592 serialization.py:589] Error check finished successfully
+I0107 18:44:34.596686 133131071646592 serialization.py:596] blocking_key_value_get on key tensorstore_checkpoint_0 was successfully completed.
+I0107 18:44:55.732273 132895700129472 serialization.py:531] Starting commit to storage layer by process: 0
+I0107 18:44:55.734012 133131071646592 trainer.py:356] gpt_trainer process   0 step      200] Average step time: 2.221458342350088 seconds
+I0107 18:45:23.876915 132895700129472 serialization.py:536] Finished committing to storage layer by process: 0
+I0107 18:45:23.877230 132895700129472 serialization.py:543] Key used for barrier is tensorstore_checkpoint_1 for process 0
+I0107 18:45:23.878556 132895700129472 serialization.py:546] Finished waiting at barrier for process 0
+I0107 18:45:23.878662 132895700129472 checkpointer.py:288] Writing index file to gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000200/index
+I0107 18:45:24.128637 132895700129472 checkpointer.py:510] Serialization of gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000200 completed in 49.53845962299965 seconds.
+I0107 18:45:24.128795 132895700129472 serialization.py:551] on_commit_callback successfully ran!
+I0107 18:45:24.129418 132895700129472 serialization.py:554] Process 0 successfully set key tensorstore_checkpoint_1 in the kv store
+
+**** restore from checkpoint step3 *****
++ OUTPUT_DIR=gs://eshen-axlearn/fuji-without-gcs-proxy-2
++ export DATA_DIR=gs://axlearn-public/tensorflow_datasets
++ DATA_DIR=gs://axlearn-public/tensorflow_datasets
++ export CONFIG=fuji-7B-s1-b32
++ CONFIG=fuji-7B-s1-b32
++ export SAVE_EVERY_N_STEPS=100
++ SAVE_EVERY_N_STEPS=100
++ [[ -n '' ]]
++ python3 -m axlearn.common.launch_trainer_main --module=gke_fuji --config=fuji-7B-s1-b32 --trainer_dir=gs://eshen-axlearn/fuji-without-gcs-proxy-2 --data_dir=gs://axlearn-public/tensorflow_datasets --jax_backend=tpu
+jax version=0.4.34
+WARNING:absl:grain is not installed. Will not be able to checkpoint grain iterators.
+I0107 19:05:40.782841 138217815939968 measurement.py:92] No recorder type specified, skipping initialize().
+I0107 19:05:40.782965 138217815939968 launch.py:110] LIBTPU_INIT_FLAGS was not set. Reason: Invalid TPU instance: none
+I0107 19:05:43.824668 138217815939968 distributed.py:106] Starting JAX distributed service on [::]:8476
+I0107 19:05:43.827337 138217815939968 distributed.py:119] Connecting to JAX distributed service on fuji-multihost-job-gcs-proxy-slice-0-0.fuji-multihost-job-gcs-proxy:8476
+I0107 19:05:50.685899 138217815939968 launch.py:132] Devices: [TpuDevice(id=0, process_index=0, coords=(0,0,0), core_on_chip=0), TpuDevice(id=1, process_index=0, coords=(1,0,0), core_on_chip=0), TpuDevice(id=2, process_index=0, coords=(0,1,0), core_on_chip=0), TpuDevice(id=3, process_index=0, coords=(1,1,0), core_on_chip=0), TpuDevice(id=4, process_index=1, coords=(0,0,1), core_on_chip=0), TpuDevice(id=5, process_index=1, coords=(1,0,1), core_on_chip=0), TpuDevice(id=6, process_index=1, coords=(0,1,1), core_on_chip=0), TpuDevice(id=7, process_index=1, coords=(1,1,1), core_on_chip=0), TpuDevice(id=8, process_index=2, coords=(0,0,2), core_on_chip=0), TpuDevice(id=9, process_index=2, coords=(1,0,2), core_on_chip=0), TpuDevice(id=10, process_index=2, coords=(0,1,2), core_on_chip=0), TpuDevice(id=11, process_index=2, coords=(1,1,2), core_on_chip=0), TpuDevice(id=12, process_index=3, coords=(0,0,3), core_on_chip=0), TpuDevice(id=13, process_index=3, coords=(1,0,3), core_on_chip=0), TpuDevice(id=14, process_index=3, coords=(0,1,3), core_on_chip=0), TpuDevice(id=15, process_index=3, coords=(1,1,3), core_on_chip=0)]
+I0107 19:05:50.686128 138217815939968 launch.py:134] Local Devices: [TpuDevice(id=0, process_index=0, coords=(0,0,0), core_on_chip=0), TpuDevice(id=1, process_index=0, coords=(1,0,0), core_on_chip=0), TpuDevice(id=2, process_index=0, coords=(0,1,0), core_on_chip=0), TpuDevice(id=3, process_index=0, coords=(1,1,0), core_on_chip=0)]
+I0107 19:05:50.686265 138217815939968 launch.py:140] DATA_DIR=gs://axlearn-public/tensorflow_datasets
+I0107 19:05:52.639922 138217815939968 measurement.py:120] No recorder configured, ignoring events.
+I0107 19:05:52.644931 138217815939968 launch_trainer.py:125] Trainer config:
+batch_axis_names[0]: 'data'
+batch_axis_names[1]: 'expert'
+batch_axis_names[2]: 'fsdp'
+batch_axis_names[3]: 'seq'
+checkpointer.gc_loop_interval_seconds: 60
+checkpointer.keep_every_n_steps: 10000
+checkpointer.keep_last_n: 3
+checkpointer.klass: 'axlearn.common.checkpointer.Checkpointer'
+checkpointer.save_policy.fn: 'axlearn.common.checkpointer.every_n_steps_policy'
+checkpointer.save_policy.min_step: 1
+checkpointer.save_policy.n: 100
+checkpointer.storage.klass: 'axlearn.common.checkpointer.TensorStoreStateStorage'
+checkpointer.storage.timeout_secs: 3600
+dir: 'gs://eshen-axlearn/fuji-without-gcs-proxy-2'
+evalers['train'].eval_dtype: 'jax.numpy.bfloat16'
+evalers['train'].eval_policy.fn: 'axlearn.common.evaler.every_n_steps_policy'
+evalers['train'].eval_policy.min_step: 1
+evalers['train'].eval_policy.n: 2000
+evalers['train'].input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+evalers['train'].input.batcher.global_batch_size: 32
+evalers['train'].input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+evalers['train'].input.batcher.prefetch_buffer_size: -1
+evalers['train'].input.is_training: False
+evalers['train'].input.klass: 'axlearn.common.input_tf_data.Input'
+evalers['train'].input.processor.fn: 'axlearn.common.input_tf_data.identity'
+evalers['train'].input.source.dataset_name: 'c4/en:3.0.1'
+evalers['train'].input.source.fn: 'axlearn.experiments.text.gpt.common.tfds_input'
+evalers['train'].input.source.is_training: False
+evalers['train'].input.source.max_sequence_length: 2048
+evalers['train'].input.source.replace_newlines_with: '\n'
+evalers['train'].input.source.split: 'train[:8192]'
+evalers['train'].input.source.train_shuffle_buffer_size: 16384
+evalers['train'].input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+evalers['train'].input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+evalers['train'].klass: 'axlearn.common.evaler.SpmdEvaler'
+evalers['train'].metric_calculator.klass: 'axlearn.common.evaler.ModelSummaryAccumulator'
+evalers['train'].metric_calculator.metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+evalers['train'].metric_calculator.model_method: 'forward'
+evalers['train'].summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+evalers['train'].summary_writer.write_every_n_steps: 1
+evalers['validation'].eval_dtype: 'jax.numpy.bfloat16'
+evalers['validation'].eval_policy.fn: 'axlearn.common.evaler.every_n_steps_policy'
+evalers['validation'].eval_policy.min_step: 1
+evalers['validation'].eval_policy.n: 2000
+evalers['validation'].input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+evalers['validation'].input.batcher.global_batch_size: 32
+evalers['validation'].input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+evalers['validation'].input.batcher.prefetch_buffer_size: -1
+evalers['validation'].input.is_training: False
+evalers['validation'].input.klass: 'axlearn.common.input_tf_data.Input'
+evalers['validation'].input.processor.fn: 'axlearn.common.input_tf_data.identity'
+evalers['validation'].input.source.dataset_name: 'c4/en:3.0.1'
+evalers['validation'].input.source.fn: 'axlearn.experiments.text.gpt.common.tfds_input'
+evalers['validation'].input.source.is_training: False
+evalers['validation'].input.source.max_sequence_length: 2048
+evalers['validation'].input.source.replace_newlines_with: '\n'
+evalers['validation'].input.source.split: 'validation'
+evalers['validation'].input.source.train_shuffle_buffer_size: 16384
+evalers['validation'].input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+evalers['validation'].input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+evalers['validation'].klass: 'axlearn.common.evaler.SpmdEvaler'
+evalers['validation'].metric_calculator.klass: 'axlearn.common.evaler.ModelSummaryAccumulator'
+evalers['validation'].metric_calculator.metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+evalers['validation'].metric_calculator.model_method: 'forward'
+evalers['validation'].summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+evalers['validation'].summary_writer.write_every_n_steps: 1
+input.batcher.fn: 'axlearn.common.input_tf_data.batch'
+input.batcher.global_batch_size: 32
+input.batcher.pad_example_fn: 'axlearn.common.input_tf_data.default_pad_example_fn'
+input.batcher.prefetch_buffer_size: -1
+input.is_training: True
+input.klass: 'axlearn.common.input_tf_data.Input'
+input.processor.fn: 'axlearn.common.input_tf_data.identity'
+input.source.data_mixture_components[0]['name']: 'c4/en:3.0.1'
+input.source.data_mixture_components[0]['weight']: 1.0
+input.source.data_mixture_components[0]['shuffle_buffer_size']: 8192
+input.source.data_mixture_components[0]['split']: 'train'
+input.source.data_mixture_components[0]['info']: ''
+input.source.fn: 'axlearn.experiments.text.gpt.common.mixture_train_input_source'
+input.source.max_sequence_length: 2048
+input.source.preprocessor.fn: 'axlearn.common.input_lm.lm_text_preprocessor'
+input.source.preprocessor.max_padding_fraction: 0.5
+input.source.preprocessor.shuffle_buffer_size: 8192
+input.source.preprocessor.window_size: 128
+input.source.replace_newlines_with: '<n>'
+input.source.vocab_cfg.fn: 'axlearn.experiments.text.common.vocab'
+input.source.vocab_cfg.sentencepiece_model_name: 'bpe_32k_c4.model'
+klass: 'axlearn.common.trainer.SpmdTrainer'
+learner.ema.fn: 'axlearn.common.optimizers.param_ema'
+learner.enable_per_variable_summaries: False
+learner.klass: 'axlearn.common.learner.Learner'
+learner.optimizer.args[0].eps: 1e-08
+learner.optimizer.args[0].fn: 'axlearn.common.optimizers.clip_by_global_norm'
+learner.optimizer.args[0].max_norm: 1
+learner.optimizer.args[1].b1: 0.9
+learner.optimizer.args[1].b2: 0.95
+learner.optimizer.args[1].eps: 1e-08
+learner.optimizer.args[1].fn: 'axlearn.common.optimizers.adamw_decoupled_optimizer'
+learner.optimizer.args[1].learning_rate: 0.0003
+learner.optimizer.args[1].update_schedule.alpha: 0.1
+learner.optimizer.args[1].update_schedule.begin_value: 0.0
+learner.optimizer.args[1].update_schedule.fn: 'axlearn.common.schedule.cosine_with_linear_warmup'
+learner.optimizer.args[1].update_schedule.max_step: 262144
+learner.optimizer.args[1].update_schedule.peak_lr: 1.0
+learner.optimizer.args[1].update_schedule.warmup_steps: 2000
+learner.optimizer.args[1].weight_decay: 0.1
+learner.optimizer.fn: 'axlearn.common.optimizers.chain'
+max_step: 50000
+mesh_axis_names[0]: 'pipeline'
+mesh_axis_names[1]: 'data'
+mesh_axis_names[2]: 'expert'
+mesh_axis_names[3]: 'fsdp'
+mesh_axis_names[4]: 'seq'
+mesh_axis_names[5]: 'model'
+mesh_rules[0][0]: 'tpu-v4-(1024|2048)'
+mesh_rules[0][1][0]: 1
+mesh_rules[0][1][1]: -1
+mesh_rules[0][1][2]: 1
+mesh_rules[0][1][3]: 16
+mesh_rules[0][1][4]: 1
+mesh_rules[0][1][5]: 1
+mesh_rules[1][0]: 'tpu-v5litepod-256'
+mesh_rules[1][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[1][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[1][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[1][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[1][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].fn: 'axlearn.common.utils.offload_dots_saveable'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_dst: 'pinned_host'
+mesh_rules[1][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_src: 'device'
+mesh_rules[1][1].config_modifiers[2].grad_acc_steps: 4
+mesh_rules[1][1].config_modifiers[2].klass: 'axlearn.common.trainer_config_modifier.GradientAccumulationModifier'
+mesh_rules[1][1].config_modifiers[2].metric_accumulator.klass: 'axlearn.common.metrics.MetricAccumulator'
+mesh_rules[1][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[2][0]: 'tpu-v5litepod-256-2'
+mesh_rules[2][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[2][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[2][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[2][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[2][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].fn: 'axlearn.common.utils.offload_dots_saveable'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_dst: 'pinned_host'
+mesh_rules[2][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy'].offload_src: 'device'
+mesh_rules[2][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[3][0]: 'tpu-v5litepod-256-4'
+mesh_rules[3][1].config_modifiers[0].klass: 'axlearn.common.trainer_config_modifier.MeshShapeModifier'
+mesh_rules[3][1].config_modifiers[0].mesh_shape[0]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[1]: -1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[2]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[3]: 256
+mesh_rules[3][1].config_modifiers[0].mesh_shape[4]: 1
+mesh_rules[3][1].config_modifiers[0].mesh_shape[5]: 1
+mesh_rules[3][1].config_modifiers[1].klass: 'axlearn.common.trainer_config_modifier.RematSpecModifier'
+mesh_rules[3][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['prevent_cse']: True
+mesh_rules[3][1].config_modifiers[1].remat_policies['model.decoder.transformer.layer']['policy']: 'jax._src.ad_checkpoint.dots_saveable'
+mesh_rules[3][1].klass: 'axlearn.common.trainer_config_modifier.ChainConfigModifier'
+mesh_rules[4][0]: 'tpu-v5p-.*'
+mesh_rules[4][1][0]: 1
+mesh_rules[4][1][1]: -1
+mesh_rules[4][1][2]: 1
+mesh_rules[4][1][3]: 8
+mesh_rules[4][1][4]: 1
+mesh_rules[4][1][5]: 1
+mesh_rules[5][0]: 'gpu-(p5.48xlarge|p4de.24xlarge|a3-highgpu-8g)-(256|512|1024)'
+mesh_rules[5][1][0]: 1
+mesh_rules[5][1][1]: -1
+mesh_rules[5][1][2]: 1
+mesh_rules[5][1][3]: 8
+mesh_rules[5][1][4]: 1
+mesh_rules[5][1][5]: 1
+mesh_shape[0]: 1
+mesh_shape[1]: 1
+mesh_shape[2]: 1
+mesh_shape[3]: 16
+mesh_shape[4]: 1
+mesh_shape[5]: 1
+model.batch_axis_names[0]: 'data'
+model.batch_axis_names[1]: 'expert'
+model.batch_axis_names[2]: 'fsdp'
+model.decoder.attention_mask: None
+model.decoder.decoding.klass: 'axlearn.common.decoder.DecodingLayer'
+model.decoder.dim: 4096
+model.decoder.dropout_rate: 0.0
+model.decoder.emb.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.emb.klass: 'axlearn.common.embedding.TransformerTextEmbeddings'
+model.decoder.emb.token_emb.klass: 'axlearn.common.layers.Embedding'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].distribution: 'normal'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].fan: 'fan_out'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].klass: 'axlearn.common.param_init.WeightInitializer'
+model.decoder.emb.token_emb.param_init.init_by_param_name['.*weight$'].scale: 1.0
+model.decoder.emb.token_emb.param_init.klass: 'axlearn.common.param_init.DefaultInitializer'
+model.decoder.emb.token_emb.param_partition_spec[0]: None
+model.decoder.emb.token_emb.param_partition_spec[1]: 'model'
+model.decoder.eos_token_id: 1
+model.decoder.klass: 'axlearn.common.decoder.Decoder'
+model.decoder.logits_partition_spec[0][0]: 'data'
+model.decoder.logits_partition_spec[0][1]: 'expert'
+model.decoder.logits_partition_spec[0][2]: 'fsdp'
+model.decoder.logits_partition_spec[1]: 'seq'
+model.decoder.logits_partition_spec[2]: 'model'
+model.decoder.output_dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.output_norm.eps: 1e-05
+model.decoder.output_norm.forward_dtype: None
+model.decoder.output_norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.pad_token_id: 0
+model.decoder.transformer.klass: 'axlearn.common.attention.RepeatedTransformerLayer'
+model.decoder.transformer.layer.feed_forward.activation[0]: 'nn.silu'
+model.decoder.transformer.layer.feed_forward.activation[1]: 'linear'
+model.decoder.transformer.layer.feed_forward.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.feed_forward.hidden_dim.fn: 'axlearn.experiments.text.gpt.common.scale_fn'
+model.decoder.transformer.layer.feed_forward.hidden_dim.round_up_to_multiples_of: 256
+model.decoder.transformer.layer.feed_forward.hidden_dim.scale: 2.6666666666666665
+model.decoder.transformer.layer.feed_forward.klass: 'axlearn.common.attention.TransformerFeedForwardLayer'
+model.decoder.transformer.layer.feed_forward.linear1.bias: False
+model.decoder.transformer.layer.feed_forward.linear1.klass: 'axlearn.common.layers.Linear'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][0]: 'data'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][1]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[0][2]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[1]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear1.output_partition_spec[2]: 'model'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear1.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.bias: False
+model.decoder.transformer.layer.feed_forward.linear2.klass: 'axlearn.common.layers.Linear'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][0]: 'data'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][1]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[0][2]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[1]: 'seq'
+model.decoder.transformer.layer.feed_forward.linear2.output_partition_spec[2]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[0]: 'model'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][0]: 'expert'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][1]: 'fsdp'
+model.decoder.transformer.layer.feed_forward.linear2.param_partition_spec[1][2]: 'seq'
+model.decoder.transformer.layer.feed_forward.norm.eps: 1e-05
+model.decoder.transformer.layer.feed_forward.norm.forward_dtype: None
+model.decoder.transformer.layer.feed_forward.norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.transformer.layer.feed_forward.residual_weight: 1.0
+model.decoder.transformer.layer.feed_forward.stochastic_depth.klass: 'axlearn.common.layers.StochasticDepth'
+model.decoder.transformer.layer.feed_forward.stochastic_depth.mode: 'row'
+model.decoder.transformer.layer.feed_forward.structure: 'prenorm'
+model.decoder.transformer.layer.klass: 'axlearn.common.attention.TransformerLayer'
+model.decoder.transformer.layer.remat_spec['prevent_cse']: False
+model.decoder.transformer.layer.remat_spec['policy'].fn: 'jax._src.ad_checkpoint.save_only_these_names'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[0]: 'MultiheadAttention.q_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[1]: 'MultiheadAttention.k_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[2]: 'MultiheadAttention.v_proj'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[3]: 'MultiheadAttention.context'
+model.decoder.transformer.layer.remat_spec['policy'].names_which_can_be_saved[4]: 'MultiheadAttention.o_proj'
+model.decoder.transformer.layer.self_attention.attention.causal: True
+model.decoder.transformer.layer.self_attention.attention.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.self_attention.attention.input_linear.cache_dtype: 'jax.numpy.bfloat16'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.cache_dtype: 'jax.numpy.bfloat16'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.klass: 'axlearn.common.attention.FusedQKVLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.bias: False
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.klass: 'axlearn.common.attention.MultiheadInputLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.self_attention.attention.input_linear.input_linear.layer.param_partition_spec[2]: None
+model.decoder.transformer.layer.self_attention.attention.input_linear.klass: 'axlearn.common.attention.RoFormerQKVLinear'
+model.decoder.transformer.layer.self_attention.attention.input_linear.rope_pos_emb_layer.klass: 'axlearn.common.attention.RoFormerSinusoidalPositionalEmbedding'
+model.decoder.transformer.layer.self_attention.attention.input_linear.rope_pos_emb_layer.theta: 10000.0
+model.decoder.transformer.layer.self_attention.attention.input_linear.rotary_value: False
+model.decoder.transformer.layer.self_attention.attention.key_scale.klass: 'axlearn.common.attention.ScaleKey'
+model.decoder.transformer.layer.self_attention.attention.klass: 'axlearn.common.attention.MultiheadAttention'
+model.decoder.transformer.layer.self_attention.attention.num_heads: 32
+model.decoder.transformer.layer.self_attention.attention.output_linear.bias: False
+model.decoder.transformer.layer.self_attention.attention.output_linear.klass: 'axlearn.common.attention.MultiheadOutputLinear'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][0]: 'expert'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][1]: 'fsdp'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[0][2]: 'seq'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[1]: 'model'
+model.decoder.transformer.layer.self_attention.attention.output_linear.param_partition_spec[2]: None
+model.decoder.transformer.layer.self_attention.attention.query_scale.klass: 'axlearn.common.attention.ScaleQuery'
+model.decoder.transformer.layer.self_attention.dropout.klass: 'axlearn.common.layers.Dropout'
+model.decoder.transformer.layer.self_attention.klass: 'axlearn.common.attention.TransformerAttentionLayer'
+model.decoder.transformer.layer.self_attention.norm.eps: 1e-05
+model.decoder.transformer.layer.self_attention.norm.forward_dtype: None
+model.decoder.transformer.layer.self_attention.norm.klass: 'axlearn.common.layers.RMSNorm'
+model.decoder.transformer.layer.self_attention.stochastic_depth.klass: 'axlearn.common.layers.StochasticDepth'
+model.decoder.transformer.layer.self_attention.stochastic_depth.mode: 'row'
+model.decoder.transformer.layer.self_attention.structure: 'prenorm'
+model.decoder.transformer.num_layers: 32
+model.decoder.transformer.repeat.drop_output.fn: 'axlearn.common.repeat._drop_by_regex'
+model.decoder.transformer.repeat.drop_output.rules[0]: 'module_outputs.*'
+model.decoder.transformer.repeat.klass: 'axlearn.common.attention._TransformerRepeat'
+model.decoder.vocab_size: 32768
+model.dtype: 'jax.numpy.float32'
+model.klass: 'axlearn.common.causal_lm.Model'
+model.param_init.init_by_param_name['.*weight$'].distribution: 'normal'
+model.param_init.init_by_param_name['.*weight$'].fan: 'fan_in'
+model.param_init.init_by_param_name['.*weight$'].klass: 'axlearn.common.param_init.WeightInitializer'
+model.param_init.init_by_param_name['.*weight$'].scale: 1.0
+model.param_init.klass: 'axlearn.common.param_init.DefaultInitializer'
+model.seq_axis_names[0]: 'seq'
+model.z_loss_scale: 0.0
+name: 'gpt_trainer'
+prune_empty_state_updates: True
+recorder.fn: '__main__.<lambda>'
+save_input_iterator: False
+start_trace_process_indices[0]: 0
+summary_writer.klass: 'axlearn.common.summary_writer.SummaryWriter'
+summary_writer.max_queue: 1000
+summary_writer.write_every_n_steps: 100
+train_dtype: 'jax.numpy.bfloat16'
+watchdog_timeout_seconds: 3600
+I0107 19:05:53.286109 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Devices: global=16 local=4 ['tpu', 'tpu', 'tpu', 'tpu']
+I0107 19:05:53.286238 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Mesh shape: (1, 1, 1, 16, 1, 1)
+I0107 19:05:53.286378 138217815939968 utils.py:1247] Inferred intra-slice/granule mesh shape: (1, 1, 1, 16, 1, 1)
+I0107 19:05:53.286561 138217815939968 utils.py:1250] Inferred inter-slice/granule mesh shape: (1, 1, 1, 1, 1, 1)
+I0107 19:05:53.286605 138217815939968 utils.py:1261] Using hybrid mesh shape: HybridMeshShape(ici_mesh_shape=(1, 1, 1, 16, 1, 1), dcn_mesh_shape=(1, 1, 1, 1, 1, 1)).
+I0107 19:05:53.286943 138217815939968 utils.py:1099] Building device mesh.
+I0107 19:05:53.287493 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Global mesh: Mesh('pipeline': 1, 'data': 1, 'expert': 1, 'fsdp': 16, 'seq': 1, 'model': 1)
+I0107 19:05:53.865862 138217815939968 dataset_info.py:690] Load dataset info from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 19:05:54.354589 138217815939968 dataset_info.py:780] For 'c4/en/3.0.1': fields info.[splits] differ on disk and in the code. Keeping the one from code.
+I0107 19:05:54.504990 138217815939968 reader.py:261] Creating a tf.data.Dataset reading 1024 files located in folders: gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1.
+I0107 19:05:54.623357 138217815939968 logging_logger.py:49] Constructing tf.data.Dataset c4 for split train, from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 19:05:56.745047 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/emb/token_emb/weight=ParameterSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'), initializer=None, factorization=None, fan_axes=FanAxes(in_axis=-2, out_axis=-1, batch_axis=()), weight_decay_scale=None)
+I0107 19:05:56.745276 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/output_norm/scale=ParameterSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:05:56.745332 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:05:56.745392 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:05:56.745447 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/linear2/weight=ParameterSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:05:56.745498 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/feed_forward/norm/scale=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:05:56.745547 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=ParameterSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2,), out_axis=(3, 4), batch_axis=(0, 1)), weight_decay_scale=None)
+I0107 19:05:56.745597 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=ParameterSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2, 3), out_axis=(1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:05:56.745662 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Model param spec: decoder/transformer/repeat/layer/self_attention/norm/scale=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:05:56.746907 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/count=TensorSpec(shape=(), dtype=dtype('int32'), mesh_axes=PartitionSpec())
+I0107 19:05:56.747035 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/emb/token_emb/weight=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 19:05:56.747088 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/output_norm/scale=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 19:05:56.747138 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:05:56.747204 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:05:56.747257 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 19:05:56.747305 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:05:56.747352 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:05:56.747400 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:05:56.747448 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:05:56.747494 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/emb/token_emb/weight=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 19:05:56.747540 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/output_norm/scale=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 19:05:56.747586 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:05:56.747632 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:05:56.747678 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 19:05:56.747725 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:05:56.747770 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:05:56.747817 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:05:56.747863 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/norm/scale=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:05:56.747909 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/1/count=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 19:05:56.747955 138217815939968 trainer.py:356] gpt_trainer process   0 step       -1] Learner state spec: optimizer/1/3/count=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 19:05:57.931381 138217815939968 dataset_info.py:690] Load dataset info from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 19:05:58.376815 138217815939968 dataset_info.py:780] For 'c4/en/3.0.1': fields info.[splits] differ on disk and in the code. Keeping the one from code.
+I0107 19:05:58.448428 138217815939968 reader.py:261] Creating a tf.data.Dataset reading 1024 files located in folders: gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1.
+I0107 19:05:58.494834 138217815939968 logging_logger.py:49] Constructing tf.data.Dataset c4 for split train, from gs://axlearn-public/tensorflow_datasets/c4/en/3.0.1
+I0107 19:05:58.990507 138217815939968 checkpointer.py:539] Restoring checkpoint from directory gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000300
+I0107 19:05:59.105228 138217815939968 serialization.py:589] Error check finished successfully
+I0107 19:05:59.113696    2627 google_auth_provider.cc:181] Running on GCE, using service account 35800850492-compute@developer.gserviceaccount.com
+I0107 19:06:32.387284 138217815939968 checkpointer.py:1088] Restored state from ckpt at step 300
+I0107 19:06:32.417681 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] ##################### Model analysis #####################
+
+I0107 19:06:32.417827 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] ## Parameters:
+I0107 19:06:32.418156 138217815939968 trainer.py:356] gpt_trainer process   0 step      300]  134217728 [32768, 4096]        decoder/emb/token_emb/weight
+I0107 19:06:32.418253 138217815939968 trainer.py:356] gpt_trainer process   0 step      300]       4096 [4096]               decoder/output_norm/scale
+I0107 19:06:32.418318 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 1442840576 (32, 4096, 11008)    decoder/transformer/repeat/layer/feed_forward/linear1_0/weight
+I0107 19:06:32.418378 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 1442840576 (32, 4096, 11008)    decoder/transformer/repeat/layer/feed_forward/linear1_1/weight
+I0107 19:06:32.418434 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 1442840576 (32, 11008, 4096)    decoder/transformer/repeat/layer/feed_forward/linear2/weight
+I0107 19:06:32.418490 138217815939968 trainer.py:356] gpt_trainer process   0 step      300]     131072 (32, 4096)           decoder/transformer/repeat/layer/feed_forward/norm/scale
+I0107 19:06:32.418545 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 1610612736 (32, 3, 4096, 32, 128) decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight
+I0107 19:06:32.418603 138217815939968 trainer.py:356] gpt_trainer process   0 step      300]  536870912 (32, 4096, 32, 128)  decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight
+I0107 19:06:32.418658 138217815939968 trainer.py:356] gpt_trainer process   0 step      300]     131072 (32, 4096)           decoder/transformer/repeat/layer/self_attention/norm/scale
+I0107 19:06:32.418711 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] Total number of model params: 6,610,489,344
+I0107 19:06:32.769077 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 
+## Trainer States:
+I0107 19:06:32.770561 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: prng_key=uint32((4,)) mesh_axes=ParameterSpec(shape=[4], dtype=<class 'jax.numpy.uint32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:06:32.770726 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=ParameterSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'), initializer=None, factorization=None, fan_axes=FanAxes(in_axis=-2, out_axis=-1, batch_axis=()), weight_decay_scale=None)
+I0107 19:06:32.770828 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/output_norm/scale=float32((4096,)) mesh_axes=ParameterSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:06:32.770927 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:06:32.771041 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=ParameterSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:06:32.771142 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=ParameterSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', 'col']), fan_axes=FanAxes(in_axis=(-2,), out_axis=(-1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:06:32.771254 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:06:32.771337 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=ParameterSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2,), out_axis=(3, 4), batch_axis=(0, 1)), weight_decay_scale=None)
+I0107 19:06:32.771432 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=ParameterSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None), initializer=None, factorization=FactorizationSpec(axes=[None, 'row', None, 'col']), fan_axes=FanAxes(in_axis=(2, 3), out_axis=(1,), batch_axis=(0,)), weight_decay_scale=None)
+I0107 19:06:32.771520 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: model/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=ParameterSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None), initializer=None, factorization=None, fan_axes=None, weight_decay_scale=None)
+I0107 19:06:32.771601 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/count=int32(()) mesh_axes=TensorSpec(shape=(), dtype=dtype('int32'), mesh_axes=PartitionSpec())
+I0107 19:06:32.771708 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 19:06:32.771790 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/output_norm/scale=float32((4096,)) mesh_axes=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 19:06:32.771871 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:06:32.771949 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:06:32.772029 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 19:06:32.772116 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:06:32.772213 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:06:32.772299 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:06:32.772386 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/mu/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:06:32.772464 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/emb/token_emb/weight=float32((32768, 4096)) mesh_axes=TensorSpec(shape=[32768, 4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model'))
+I0107 19:06:32.772556 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/output_norm/scale=float32((4096,)) mesh_axes=TensorSpec(shape=[4096], dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None,))
+I0107 19:06:32.772638 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_0/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:06:32.772719 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear1_1/weight=float32((32, 4096, 11008)) mesh_axes=TensorSpec(shape=(32, 4096, 11008), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model'))
+I0107 19:06:32.772810 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/linear2/weight=float32((32, 11008, 4096)) mesh_axes=TensorSpec(shape=(32, 11008, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, 'model', ('expert', 'fsdp', 'seq')))
+I0107 19:06:32.772891 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/feed_forward/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:06:32.772984 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/i_proj/i_proj/qkv_proj/weight=float32((32, 3, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 3, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:06:32.773067 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/attention/o_proj/weight=float32((32, 4096, 32, 128)) mesh_axes=TensorSpec(shape=(32, 4096, 32, 128), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, ('expert', 'fsdp', 'seq'), 'model', None))
+I0107 19:06:32.773156 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/0/nu/decoder/transformer/repeat/layer/self_attention/norm/scale=float32((32, 4096)) mesh_axes=TensorSpec(shape=(32, 4096), dtype=<class 'jax.numpy.float32'>, mesh_axes=PartitionSpec(None, None))
+I0107 19:06:32.773262 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/1/count=int32(()) mesh_axes=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 19:06:32.773347 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] State: learner/optimizer/1/3/count=int32(()) mesh_axes=TensorSpec(shape=[], dtype=<class 'jax.numpy.int32'>, mesh_axes=PartitionSpec())
+I0107 19:06:32.832901 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] Training state size: 73.88 GiB
+Training state size (partitioned): 6.03 GiB
+Max training state size (partitioned): 6.03 GiB
+I0107 19:06:32.833108 138217815939968 trainer.py:356] gpt_trainer process   0 step      300] 
+##########################################################
+I0107 19:06:33.241635 138217815939968 trainer.py:553] Starting loop...
+I0107 19:07:01.665160 138217815939968 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 19:07:01.726346 138217815939968 base_layer.py:337] Applying remat on gpt_trainer.model.decoder.transformer.repeat.layer.<function TransformerLayer.forward at 0x7d979c277490>: RematSpec(prevent_cse=False, policy=config_for_function(jax._src.ad_checkpoint.save_only_these_names)(fn=<function save_only_these_names at 0x7db4a8bf3b50>, names_which_can_be_saved=['MultiheadAttention.q_proj', 'MultiheadAttention.k_proj', 'MultiheadAttention.v_proj', 'MultiheadAttention.context', 'MultiheadAttention.o_proj']))
+I0107 19:07:16.480628 138217815939968 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 19:07:16.494660 138217815939968 trainer.py:561] input_batch={'input_ids': (8, 2048), 'target_labels': (8, 2048), 'target_num_bytes': (8,)}
+I0107 19:07:33.615297 137993263343296 checkpointer.py:1054] Garbage collection done on gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints. Remaining=['gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000300', 'gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000200', 'gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000100']
+I0107 19:09:34.002911 138217815939968 trainer.py:356] gpt_trainer process   0 step      400] loss=10.149193 aux={}
+I0107 19:10:38.564535 138217815939968 array_serialization.py:367] Waiting for previous serialization to finish.
+I0107 19:10:38.564708 138217815939968 serialization.py:589] Error check finished successfully
+I0107 19:11:00.292356 137990076581568 serialization.py:531] Starting commit to storage layer by process: 0
+I0107 19:11:00.293639 138217815939968 trainer.py:356] gpt_trainer process   0 step      400] Average step time: 2.670518134140002 seconds
+I0107 19:11:28.732361 137990076581568 serialization.py:536] Finished committing to storage layer by process: 0
+I0107 19:11:28.732707 137990076581568 serialization.py:543] Key used for barrier is tensorstore_checkpoint_0 for process 0
+I0107 19:11:28.733900 137990076581568 serialization.py:546] Finished waiting at barrier for process 0
+I0107 19:11:28.734010 137990076581568 checkpointer.py:288] Writing index file to gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000400/index
+I0107 19:11:28.995804 137990076581568 checkpointer.py:510] Serialization of gs://eshen-axlearn/fuji-without-gcs-proxy-2/checkpoints/step_00000400 completed in 50.43698287199368 seconds.
+I0107 19:11:28.996010 137990076581568 serialization.py:551] on_commit_callback successfully ran!
+I0107 19:11:28.996561 137990076581568 serialization.py:554] Process 0 successfully set key tensorstore_checkpoint_0 in the kv store
