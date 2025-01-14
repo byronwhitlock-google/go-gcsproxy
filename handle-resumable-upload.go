@@ -120,10 +120,13 @@ func HandleResumablePutResponse(f *proxy.Flow) error {
 	return nil
 }
 
+// rangeString = "bytes=0-72355494"
 // rangeString = "bytes 0-72355493/72355494"
+
 func parseByteRangeHeader(rangeStr string) (start int, end int, size int, err error) {
+
 	// Regular expression to capture the start, end, and total values
-	re := regexp.MustCompile(`bytes (\d+)-(\d+)/(\d+)`)
+	re := regexp.MustCompile(`bytes[ =]+(\d+?)[\- ]+(\d+)[\/ ]?(\d+)?`)
 	matches := re.FindStringSubmatch(rangeStr)
 
 	if len(matches) != 4 {
@@ -169,10 +172,9 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 
 	// Check if request body has bucket name as pythonsdk does not give bucket name, coming from python sdk
 	_, exists := dataMap["bucket"]
-	if !exists{
-		dataMap["bucket"]=getBucketNameFromRequestUri(f.Request.URL.Path)
+	if !exists {
+		dataMap["bucket"] = getBucketNameFromRequestUri(f.Request.URL.Path)
 	}
-
 
 	// uploader id comes from GCS so it is in the Response
 	uploaderId := f.Response.Header.Get("X-GUploader-UploadID")

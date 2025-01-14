@@ -10,19 +10,24 @@ import (
 )
 
 func HandleSimpleDownloadRequest(f *proxy.Flow) error {
-	// update request grab the whole file.
-	// strip range header, we don't support partial uploads at all.
-	f.Request.Header.Del("range")
+	// handle streaming downloads in an ineffecient way. download whole file and return range.
+	byteRangeHeader := f.Request.Header.Get("range")
+	if byteRangeHeader != "" {
+		f.Request.Header.Set("x-original-byte-range", byteRangeHeader)
+		f.Request.Header.Del("range")
+	}
+
 	return nil
 }
+
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse :%v", len(f.Response.Body)))
 
 	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
-	bucketName:=getBucketNameFromRequestUri(f.Request.URL.Path)
+	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
 	// Update the response content with the decrypted content
 	unencryptedBytes, err := decryptBytes(f.Request.Raw().Context(),
-		getKMSKeyName(bucketName),//config.KmsResourceName, 
+		getKMSKeyName(bucketName), //config.KmsResourceName,
 		f.Response.Body)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)
@@ -30,6 +35,18 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	}
 
 	log.Debug("#### Decryption OK")
+	// check if this was as streaming/chunked download
+	byteRangeHeader := f.Request.Header.Get("x-original-byte-range")
+
+	if byteRangeHeader != "" {
+		log.Debugf("Grabbing requested byte range slice %v", byteRangeHeader)
+		start, end, _, err := parseByteRangeHeader(byteRangeHeader)
+		if err != nil {
+			return err
+		}
+		unencryptedByteSlice := unencryptedBytes[start:end]
+		unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
+	}
 
 	f.Response.Body = unencryptedBytes
 	contentLength := bytes.Count(unencryptedBytes, []byte{})
