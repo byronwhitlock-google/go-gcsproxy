@@ -202,7 +202,6 @@ out:
 	// recalculate content length
 	f.Response.ReplaceToDecodedBody()
 }
-
 func debugResponse(f *proxy.Flow) {
 	header := "<<<" + f.Id.String()
 	log.Debugf("%v url: %v %v", header, f.Request.Method, f.Request.URL.String())
