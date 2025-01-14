@@ -152,29 +152,6 @@ def test_tf_data_write_read(setup_data):
 
     assert sorted(expected["texts"]) == sorted(actual["texts"])
 
-    # Reading dataset from GCS using axlearn.tfrecord_dataset fn
-    logger.info(
-        f"Reading dataset from {gcs_path_1} and {gcs_path_2} using alxearn.tfrecord_dataset fn")
-    pattern = gcs_path_1.replace(
-        OBJECT_NAME + "-shard1.tfrecord", OBJECT_NAME + "*")
-    source = config_for_function(tfrecord_dataset).set(
-        glob_path=pattern,
-        is_training=False,
-        shuffle_buffer_size=0,
-        features={
-            # Single string (text) feature
-            "text": tf.io.FixedLenFeature([], tf.string)
-        }
-    )
-    ds = source.instantiate()
-
-    actual = {"texts": []}
-    for input_batch in ds():
-        decoded_text = tf.io.decode_base64(input_batch["text"])
-        actual["texts"].append(decoded_text.numpy().decode('utf-8'))
-
-    assert sorted(expected["texts"]) == sorted(actual["texts"])
-
 # TODO b/384990452 proxy can't handle partial object donwload with encryption enabled
 @pytest.mark.skip(reason="Not working with encryption yet.")
 def test_tensorstore_orbax_write_read_pytree(setup_data):

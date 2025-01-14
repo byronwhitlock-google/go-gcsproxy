@@ -1,5 +1,0 @@
-mitmproxy
-google-cloud-storage
-google-cloud-kms
-tink==1.10.0
-debugpy

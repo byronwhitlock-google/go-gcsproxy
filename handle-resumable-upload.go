@@ -25,42 +25,9 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	if !(start == 0 && end+1 == size) {
 		return fmt.Errorf("unsupported Byte range detected '%v'", byteRangeHeader)
 	}
-	// unencryptedFileContent := bytes.NewBuffer(f.Request.Body)
-
-	// // Encrypt the intercepted file
-	// encryptedData, err := encryptBytes(f.Request.Raw().Context(),
-	// 	config.KmsResourceName,
-	// 	unencryptedFileContent.Bytes())
-
-	// if err != nil {
-	// 	return fmt.Errorf("error encrypting  request: %v", err)
-	// }
-
-	// // rewrite the byte range header to what we have already enxcrypted...
-	// size = len(encryptedData) //bytes.Count(encryptedData, []byte{})
-	// end = size
-	// start = 0
-
-	// newByteRangeHeader := fmt.Sprintf("bytes %v-%v/%v", start, end-1, size)
-	// f.Request.Header.Set("Content-Range", newByteRangeHeader)
-	// f.Request.Body = encryptedData
-
-	// log.Debug(fmt.Sprint("encrypted PUT request headers: %v", f.Request.Header))
-	// //log.Debug(fmt.Sprint("Encrypted PUT request Body: %s", f.Request.Body))
-
-	// // Save the original content length for rewriting when download.
-	// f.Request.Header.Set("gcs-proxy-original-content-length",
-	// 	f.Request.Header.Get("Content-Length"))
-
-	// f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
-	// 	strconv.Itoa(unencryptedFileContent.Len()))
-
-	// // save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
-	// f.Request.Header.Set("gcs-proxy-original-md5-hash",
-	// 	base64_md5hash(unencryptedFileContent.Bytes()))
 
 	// first we need the uploader id so we can get the resumable metadata.
-	log.Debug(fmt.Sprintf("got query string  %s", f.Request.URL.RawQuery))
+	log.Debugf("HandleResumablePutRequest got query string  %s", f.Request.URL.RawQuery)
 
 	uploadId := f.Request.URL.Query().Get("upload_id")
 
@@ -79,17 +46,10 @@ func HandleResumablePutRequest(f *proxy.Flow) error {
 	f.Request.URL = url
 
 	ConvertSinglePartUploadtoMultiPartUpload(f)
-
-	// don't update metadata until we send the request. otherwise the object will not exist
-	// defer updateGcsMetadata(f.Request.Raw().Context(),
-	// 	f.Request.Header.Get("Authorization"),
-	// 	resumeData["bucket"],
-	// 	resumeData["name"],
-	// 	strconv.Itoa(unencryptedFileContent.Len()),
-	// 	base64_md5hash(unencryptedFileContent.Bytes()))
 	return nil
 }
 
+// TODO eshen remove the function if it's not needed
 func HandleResumablePutResponse(f *proxy.Flow) error {
 
 	// this code should never be executted. after converting a resumable PUT to a POST, it should fail.
@@ -161,13 +121,18 @@ func HandleResumablePostRequest(f *proxy.Flow) error {
 func HandleResumablePostResponse(f *proxy.Flow) error {
 
 	// the client posts the file name in the request body. store that and other info in our session file.
-	log.Debug(fmt.Sprintf("HandleResumablePostResponse Response.Body: %s", f.Request.Body))
+	log.Debugf("HandleResumablePostResponse Request.Body: %s", f.Request.Body)
 
-	// Unmarshal the json contents of the first part.
-	var dataMap map[string]string
-	err := json.Unmarshal(f.Request.Body, &dataMap)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling gcsObjectMetadata in HandleResumablePostResponse: %v", err)
+	dataMap := map[string]string{}
+
+	if len(f.Request.Body) == 0 {
+		dataMap["name"] = f.Request.URL.Query().Get("name")
+	} else {
+		// Unmarshal the json contents of the first part.
+		err := json.Unmarshal(f.Request.Body, &dataMap)
+		if err != nil {
+			return fmt.Errorf("error unmarshalling gcsObjectMetadata in HandleResumablePostResponse: %v", err)
+		}
 	}
 
 	// Check if request body has bucket name as pythonsdk does not give bucket name, coming from python sdk
@@ -183,7 +148,6 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 	}
 
 	StoreResumableData(uploaderId, dataMap)
-
 	return nil
 }
 
