@@ -4,10 +4,36 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
+
+// rangeString = "bytes=0-72355493"
+func parseRangeHeader(header string) (start int, end int, err error) {
+	parts := strings.Split(header, "=")
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("invalid Range header format")
+	}
+
+	rangeValues := strings.Split(parts[1], "-")
+	if len(rangeValues) != 2 {
+		return 0, 0, fmt.Errorf("invalid Range header format")
+	}
+
+	s, err := strconv.Atoi(rangeValues[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid start value: %w", err)
+	}
+
+	e, err := strconv.Atoi(rangeValues[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid end value: %w", err)
+	}
+
+	return s, e, nil
+}
 
 func HandleSimpleDownloadRequest(f *proxy.Flow) error {
 	// handle streaming downloads in an ineffecient way. download whole file and return range.
@@ -40,7 +66,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 
 	if byteRangeHeader != "" {
 		log.Debugf("Grabbing requested byte range slice %v", byteRangeHeader)
-		start, end, _, err := parseByteRangeHeader(byteRangeHeader)
+		start, end, err := parseRangeHeader(byteRangeHeader)
 		if err != nil {
 			return err
 		}
