@@ -1,3 +1,6 @@
+# Copyright 2025 Google.
+#
+# This software is provided as-is, without warranty or representation for any use or purpose.
 """
 Proxy funtioanl testing for Axlearn(tensforflow) libraries to interface GCS
 

@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package util
 
 import (
 	"fmt"
@@ -7,13 +12,15 @@ import (
 	"strconv"
 	"strings"
 
+	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
+	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
 
-func getKMSKeyName(bucketName string) string {
+func GetKMSKeyName(bucketName string) string {
 
-	bucketMap := bucketKeyMappings(config.KmsBucketKeyMapping)
+	bucketMap := cfg.GlobalConfig.KmsBucketKeyMapping
 
 	if bucketMap == nil {
 		log.Debug("No bucket mapping found")
@@ -36,7 +43,7 @@ func getKMSKeyName(bucketName string) string {
 
 }
 
-func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string {
+func GetBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string {
 	var bucketNamePath string
 
 	for key, value := range bucketNameMap {
@@ -52,21 +59,7 @@ func getBucketNameFromGcsMetadata(bucketNameMap map[string]interface{}) string {
 	return bucketName
 }
 
-func generateRandom19DigitNumber() int {
-
-	// Generate the first digit (1-9) to avoid leading zero
-	firstDigit := rand.Intn(9) + 1
-
-	// Generate the next 18 digits (0-9)
-	var number int64 = int64(firstDigit)
-	for i := 0; i < 18; i++ {
-		number = number*10 + int64(rand.Intn(10))
-	}
-
-	return int(number)
-}
-
-func generateHeadersList(f *proxy.Flow) (map[string]string, string) {
+func GenerateHeadersList(f *proxy.Flow) (map[string]string, string) {
 	defaultMap := map[string]string{
 		"Accept-Encoding":   "gzip, deflate",
 		"Accept":            "application/json",
@@ -85,7 +78,7 @@ func generateHeadersList(f *proxy.Flow) (map[string]string, string) {
 // f.Request.URL.Path
 // "/download/storage/v1/b/ehorning-axlearn/o/README.md"
 // "/bucket-name/object-path"
-func getBucketNameFromRequestUri(urlPath string) string {
+func GetBucketNameFromRequestUri(urlPath string) string {
 	var bucketName string
 	if strings.Contains(urlPath, "/b/") {
 		//Splits for the filepath with b in between
@@ -105,14 +98,14 @@ func getBucketNameFromRequestUri(urlPath string) string {
 }
 
 // f.Request.URL.Path
-func generateMetadata(f *proxy.Flow, contentType string, objectName string) map[string]interface{} {
+func GenerateMetadata(f *proxy.Flow, contentType string, objectName string) map[string]interface{} {
 	defaultMap := map[string]interface{}{
-		"bucket":      getBucketNameFromRequestUri(f.Request.URL.Path),
+		"bucket":      GetBucketNameFromRequestUri(f.Request.URL.Path),
 		"contentType": contentType,
 		"name":        objectName,
 		"metadata": map[string]interface{}{
 			"x-unencrypted-content-length": len(f.Request.Body),
-			"x-md5Hash":                    Base64MD5Hash(f.Request.Body),
+			"x-md5Hash":                    crypto.Base64MD5Hash(f.Request.Body),
 		},
 	}
 	return defaultMap
@@ -147,4 +140,18 @@ func CreateSecondMultipartMimeHeader(contentType string) textproto.MIMEHeader {
 		mimeHeader.Set(k, v)
 	}
 	return mimeHeader
+}
+
+func generateRandom19DigitNumber() int {
+
+	// Generate the first digit (1-9) to avoid leading zero
+	firstDigit := rand.Intn(9) + 1
+
+	// Generate the next 18 digits (0-9)
+	var number int64 = int64(firstDigit)
+	for i := 0; i < 18; i++ {
+		number = number*10 + int64(rand.Intn(10))
+	}
+
+	return int(number)
 }

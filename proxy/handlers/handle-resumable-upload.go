@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"encoding/json"
@@ -9,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -135,7 +141,7 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 	// Check if request body has bucket name as pythonsdk does not give bucket name, coming from python sdk
 	_, exists := dataMap["bucket"]
 	if !exists {
-		dataMap["bucket"] = getBucketNameFromRequestUri(f.Request.URL.Path)
+		dataMap["bucket"] = util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	}
 
 	// uploader id comes from GCS so it is in the Response
