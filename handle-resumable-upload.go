@@ -17,7 +17,7 @@ import (
 func HandleResumablePutRequest(f *proxy.Flow) error {
 
 	byteRangeHeader := f.Request.Header.Get("Content-Range")
-	start, end, size, err := parseByteRangeHeader(byteRangeHeader)
+	start, end, size, err := parseContentRangeHeader(byteRangeHeader)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func HandleResumablePutResponse(f *proxy.Flow) error {
 }
 
 // rangeString = "bytes 0-72355493/72355494"
-func parseByteRangeHeader(rangeStr string) (start int, end int, size int, err error) {
+func parseContentRangeHeader(rangeStr string) (start int, end int, size int, err error) {
 	// Regular expression to capture the start, end, and total values
 	re := regexp.MustCompile(`bytes (\d+)-(\d+)/(\d+)`)
 	matches := re.FindStringSubmatch(rangeStr)
