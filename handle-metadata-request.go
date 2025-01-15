@@ -10,7 +10,7 @@ import (
 
 func HandleMetadataRequest(f *proxy.Flow) error {
 
-	log.Debug(fmt.Sprintf("got query string  %s", f.Request.URL.RawQuery))
+	log.Debug(fmt.Sprintf("HandleMetadataRequest got query string  %s", f.Request.URL.RawQuery))
 
 	queryString := f.Request.URL.Query()
 

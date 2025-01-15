@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -24,16 +22,15 @@ type GetReqHeader struct {
 // https://cloud.google.com/storage/docs/json_api/v1/objects
 type gcsMethod int
 
-
 const (
-	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, uri=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
-	singlePartUpload                     // uploadType=media,     VERB=POST, uri=/upload/storage/v1/b/
-	resumableUploadPost                  // unsupported uploadType=resumable, VERB=POST, uri=/upload/storage/v1/b/
-	resumableUploadPut                   // unsupported uploadType=resumable, VERB=PUT , uri=/upload/storage/v1/b/
-	simpleDownload                       // VERB=GET, uri=/download
+	multiPartUpload     gcsMethod = iota // uploadType=multipart, VERB=POST, path=/upload/storage/v1/b/  DOCS: https://cloud.google.com/storage/docs/json_api/v1/objects/insert
+	singlePartUpload                     // uploadType=media,     VERB=POST, path=/upload/storage/v1/b/
+	resumableUploadPost                  // uploadType=resumable, VERB=POST, path=/upload/storage/v1/b/
+	resumableUploadPut                   // uploadType=resumable, VERB=PUT , path=/upload/storage/v1/b/
+	simpleDownload                       // VERB=GET, path=/storage/v1/b/bucket/o/object?alt=media or path=/bucket-name/object-name
 	streamingDownload                    // unsupported
-	metadataRequest
-	passThru // all other requests
+	metadataRequest                      // VERB=GET, path=/storage/v1/b/bucket/o/object?alt=json or path=/storage/v1/b/bucket/o/object?fields=size,generation,updated
+	passThru                             // all other requests
 
 )
 
@@ -45,7 +42,13 @@ func IsEncryptDisabled() bool {
 }
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
-	if f.Request.URL.Host == "storage.googleapis.com" {
+	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
+	if getKMSKeyName(bucketName) == "" {
+		return passThru
+	}
+	// GCS supports both hostnames
+	if f.Request.URL.Host == "storage.googleapis.com" || f.Request.URL.Host == "www.googleapis.com" {
+		// multi-part or simple upload
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {
 
@@ -57,7 +60,10 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 				}
 			}
 		}
-		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") || strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
+
+		// Resumable upload
+		if strings.HasPrefix(f.Request.URL.Path, "/resumable/upload/storage/v1") ||
+			(strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") && f.Request.URL.Query().Get("uploadType") == "resumable") {
 			if f.Request.Method == "POST" {
 				return resumableUploadPost
 			} else if f.Request.Method == "PUT" {
@@ -65,30 +71,47 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 			}
 		}
 
-		if strings.HasPrefix(f.Request.URL.Path, "/download") {
-			//if f.Request.Method == "GET" {
-			return simpleDownload
-			//}
-		}
-
+		// get metadata
 		if strings.HasPrefix(f.Request.URL.Path, "/storage/v1/b/") {
 			if f.Request.Method == "GET" {
+				// pass through for metadata request for bucket
+				// TODO eshen may need to bypass directory too
+				if strings.HasSuffix(f.Request.URL.Path, "/o") {
+					return passThru
+				}
 				if f.Request.URL.Query().Get("alt") == "json" {
 					return metadataRequest
 				}
+				if f.Request.URL.Query().Get("alt") == "media" {
+					return simpleDownload
+				}
+				if f.Request.URL.Query().Get("fields") != "" {
+					f.Request.URL.RawQuery = "alt=json"
+					return metadataRequest
+				}
+
 			}
 		}
+
+		// download object when path=/download
+		if strings.HasPrefix(f.Request.URL.Path, "/download") {
+			return simpleDownload
+		}
+		// download when path=/bucket-name/object-name
+		if f.Request.Method == "GET" {
+			if f.Request.URL.Query().Get("alt") == "" || f.Request.URL.Query().Get("fields") == "" {
+				return simpleDownload
+			}
+
+		}
+
 	}
 	return passThru
 }
 
-func (h *GetReqHeader) Requestheaders(f *proxy.Flow) {
-	log.Debug(fmt.Sprintf("got request headers: %s", f.Request.Raw().Header))
-}
-
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
-	log.Debug(fmt.Sprintf("got request: %s", f.Request.Raw().RequestURI))
+	debugRequest(f)
 	if IsEncryptDisabled() {
 		return
 	}
@@ -133,9 +156,12 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	var err error
 
+	debugResponse(f)
+
 	if f.Response.StatusCode < 200 || f.Response.StatusCode > 299 {
-		log.Error(fmt.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body))
+		log.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body)
 	}
+
 	if IsEncryptDisabled() {
 		return
 	}
@@ -176,20 +202,16 @@ out:
 	// recalculate content length
 	f.Response.ReplaceToDecodedBody()
 }
-
-func (c *EncryptGcsPayload) StreamRequestModifier(f *proxy.Flow, io io.Reader) io.Reader{
-	fmt.Println("In StreamRequestModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
-	return stringReader 
+func debugResponse(f *proxy.Flow) {
+	header := "<<<" + f.Id.String()
+	log.Debugf("%v url: %v %v", header, f.Request.Method, f.Request.URL.String())
+	log.Debugf("%v body len: %v, ", header, len(f.Response.Body))
+	log.Debugf("%v header: %#v", header, f.Response.Header)
 }
 
-func (c *DecryptGcsPayload) StreamResponseModifier(f *proxy.Flow, io io.Reader) io.Reader{
-	fmt.Println("In StreamResponseModifier")
-	fmt.Println(f)
-	fmt.Println(io)
-	stringReader := strings.NewReader("Maximum object size reached. Stream Processing in proxy disabled. Proxy supports files for a maximum size of 64GB. ")
-	return stringReader 
-	
+func debugRequest(f *proxy.Flow) {
+	header := ">>>" + f.Id.String()
+	log.Debugf("%v url: %v %v", header, f.Request.Method, f.Request.URL.String())
+	log.Debugf("%v body len: %v, ", header, len(f.Request.Body))
+	log.Debugf("%v header: %#v", header, f.Request.Header)
 }
