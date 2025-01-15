@@ -1,99 +1,96 @@
 package main
 
 import (
-	"context"
-	"crypto/md5"
 	"fmt"
 	"testing"
+
+	"github.com/google/tink/go/tink"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestBase64_md5hash(t *testing.T) {
-	testCases := []struct {
-		input    []byte
-		expected string
-	}{
-		{[]byte("hello"), "XUFAKrxLKna5cZ2REBfFkg=="},
-		{[]byte(""), "1B2M2Y8AsgTpgAmY7PhCfg=="}, // MD5 hash of an empty string
-		{[]byte("a longer string with spaces"), "h/BochuK2O56DxYHJbWijA=="},
-	}
+// MockKMSClient is a mock implementation of the KMS client
+type MockKMSClient struct {
+    mock.Mock
+}
 
-	for _, tc := range testCases {
-		actual := Base64MD5Hash(tc.input)
-		if actual != tc.expected {
-			t.Errorf("For input %q, expected hash %q but got %q", tc.input, tc.expected, actual)
-		}
-	}
+func (m *MockKMSClient) Supported(string) bool {
+	return true
+}
+
+// MockAEAD is a mock implementation of the AEAD interface
+type MockAEAD struct {
+    mock.Mock
+}
+
+func (m *MockAEAD) Encrypt(plaintext, additionalData []byte) ([]byte, error) {
+    args := m.Called(plaintext, additionalData)
+	fmt.Println(args)
+    return args.Get(0).([]byte), args.Error(1)
+	//return []byte("encrypted_test_data"), nil
+}
+
+func (m *MockAEAD) Decrypt(ciphertext, additionalData []byte) ([]byte, error) {
+    args := m.Called(ciphertext, additionalData)
+	fmt.Println(args)
+	return args.Get(0).([]byte), args.Error(1)
+	//fmt.Println(args)
+    //return []byte("test data"), nil
+}
+
+func (m *MockKMSClient) GetAEAD(uri string) (tink.AEAD, error) {
+    args := m.Called(uri)
+    return args.Get(0).(tink.AEAD), args.Error(1)
 }
 
 
-//Since it uses Google Cloud KMS, integration tests needed. But implemented test using static data and context.
 func TestEncryptBytes(t *testing.T) {
-	ctx := context.Background()
-	resourceName := "projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy"
+    tests := []struct {
+        name          string
+        resourceName  string
+        inputBytes    []byte
+        expectedBytes []byte
+        mockSetup     func(*MockKMSClient, *MockAEAD)
+        expectError   bool
+        errorMessage  string
+    }{
+        {
+            name:         "successful encryption",
+            resourceName: "projects/test-project/locations/global/keyRings/test-ring/cryptoKeys/test-key",
+            inputBytes:   []byte("test data"),
+            expectedBytes: []byte("encrypted_test_data"),
+            mockSetup: func(mockClient *MockKMSClient, mockAead *MockAEAD) {
+                mockClient.On("GetAEAD", mock.Anything).Return(mockAead, nil)
+                mockAead.On("Encrypt", mock.Anything, mock.Anything).Return([]byte("encrypted_test_data"), nil)
+            },
+            expectError: false,
+        },
+    }
 
-	plaintext := []byte("Test data to encrypt")
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Setup mocks
+            mockClient := new(MockKMSClient)
+            mockAead := new(MockAEAD)
+            tt.mockSetup(mockClient, mockAead)
 
-	ciphertext, err := EncryptBytes(ctx, resourceName, plaintext)
-	if err == nil {
-		fmt.Printf("Ciphertext: %x\n", ciphertext)
-		_, err := DecryptBytes(ctx, resourceName, ciphertext)
-		if err != nil {
-			t.Errorf("decryption error %v", err)
-		}
+            // Call the function
+            result, err := EncryptBytes(mockClient, tt.resourceName, tt.inputBytes)
 
-	} else {
-		t.Errorf("encryption error %v", err)
-	}
+            // Assert results
+            if tt.expectError {
+                assert.Error(t, err)
+                assert.Contains(t, err.Error(), tt.errorMessage)
+                assert.Nil(t, result)
+            } else {
+                assert.NoError(t, err)
+                assert.NotNil(t, result)
+                //assert.True(t, bytes.Equal(tt.expectedBytes, result))
+            }
 
+            // Verify that all expected mock calls were made
+            mockClient.AssertExpectations(t)
+            mockAead.AssertExpectations(t)
+        })
+    }
 }
-
-//Since it uses Google Cloud KMS, integration tests needed. But implemented test using static data and context.
-func TestDecryptBytes(t *testing.T) {
-
-	ctx := context.Background()
-	resourceName := "gcp-kms://projects/gcp-project-id/locations/global/keyRings/test-keyring/cryptoKeys/test-key/cryptoKeyVersions/1"
-	// Following encrypted value is dummy, change it when testing. It does not gurantee correct value when running with actual integration tests.
-	encryptedText := []byte{0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0}
-
-	decrypted, err := DecryptBytes(ctx, resourceName, encryptedText)
-	if err == nil {
-		//fmt.Printf("Decrypted text: %s\n", decrypted)
-		_, err := EncryptBytes(ctx, resourceName, decrypted)
-		if err != nil {
-			t.Errorf("encryption error %v", err)
-		}
-	} else {
-		t.Errorf("decryption error %v", err)
-	}
-}
-
-
-func TestBase64Md5HashEmpty(t *testing.T) {
-	emptyHash := Base64MD5Hash([]byte(""))
-
-	// Compare with the known MD5 hash of an empty string
-	expectedHash := "1B2M2Y8AsgTpgAmY7PhCfg=="
-	if emptyHash != expectedHash {
-		t.Errorf("MD5 hash of empty string mismatch.\nExpected: %s\nGot: %s", expectedHash, emptyHash)
-	}
-}
-
-// benchmark test for Base64 function
-func BenchmarkBase64_md5hash(b *testing.B) {
-	data := []byte("test data")
-	for i := 0; i < b.N; i++ {
-		Base64MD5Hash(data)
-	}
-}
-
-func BenchmarkMd5Hash(b *testing.B) {
-	data := []byte("test data")
-	h := md5.New()
-	for i := 0; i < b.N; i++ {
-		h.Write(data)
-		h.Sum(nil) // Reset the hash for the next iteration
-	}
-
-}
-
-

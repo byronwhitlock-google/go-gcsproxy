@@ -116,9 +116,9 @@ func loadConfig() *Config {
 	config := new(Config)
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/Users/lkolluru/working-dir/apple/go-gcsproxy/test")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
+	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "*:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy")
 
 	flag.BoolVar(&config.version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -154,7 +154,7 @@ func CheckKmsBucketKeyMapping() error {
 		return fmt.Errorf("No KmsBucketKeyMapping found")
 	}
 	for _, value := range bucketKeyMap {
-		_, err := EncryptBytes(ctx, value, []byte("Hello, World!"))
+		_, err := EncryptBytesWrapper(ctx, value, []byte("Hello, World!"))
 		if err != nil {
 			return err
 		}

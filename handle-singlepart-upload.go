@@ -54,7 +54,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// Encrypt data in body
 	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptBody, err := EncryptBytes(f.Request.Raw().Context(),
+	encryptBody, err := EncryptBytesWrapper(f.Request.Raw().Context(),
 		getKMSKeyName(bucketName),
 		f.Request.Body)
 	if err != nil {
@@ -119,7 +119,7 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 
 func HandleSinglePartUploadRequest(f *proxy.Flow) error {
 	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptedData, err := EncryptBytes(f.Request.Raw().Context(),
+	encryptedData, err := EncryptBytesWrapper(f.Request.Raw().Context(),
 		getKMSKeyName(bucketName),
 		f.Request.Body)
 
