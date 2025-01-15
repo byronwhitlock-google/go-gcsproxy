@@ -154,7 +154,7 @@ func CheckKmsBucketKeyMapping() error {
 		return fmt.Errorf("No KmsBucketKeyMapping found")
 	}
 	for _, value := range bucketKeyMap {
-		_, err := EncryptBytesWrapper(ctx, value, []byte("Hello, World!"))
+		_, err := EncryptBytes(ctx, value, []byte("Hello, World!"))
 		if err != nil {
 			return err
 		}

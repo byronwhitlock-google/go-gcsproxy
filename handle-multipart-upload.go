@@ -125,7 +125,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
-		encryptedData, err = EncryptBytesWrapper(f.Request.Raw().Context(),
+		encryptedData, err = EncryptBytes(f.Request.Raw().Context(),
 			getKMSKeyName(bucketName),
 			unencryptedFileContent.Bytes())
 

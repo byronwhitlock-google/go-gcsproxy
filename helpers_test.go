@@ -38,8 +38,6 @@ func TestGetBucketNameFromGcsMetadata(t *testing.T) {
 		input    map[string]interface{}
 		expected string
 	}{
-		//{map[string]interface{}{"bucket": "gs://my-bucket"}, "my-bucket"},
-		//{map[string]interface{}{"bucket": "gs://my-bucket/path/to/object"}, "my-bucket"},
 		{map[string]interface{}{"name": "my-object"}, ""}, // Case where "bucket" key is missing
 		{map[string]interface{}{}, ""},                   // Empty input map
 	}
