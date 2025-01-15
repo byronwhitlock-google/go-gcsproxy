@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
 	"github.com/byronwhitlock-google/go-gcsproxy/util"
@@ -16,12 +17,42 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// rangeString = "bytes=0-72355493"
+func parseRangeHeader(header string) (start int, end int, err error) {
+	parts := strings.Split(header, "=")
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("invalid Range header format")
+	}
+
+	rangeValues := strings.Split(parts[1], "-")
+	if len(rangeValues) != 2 {
+		return 0, 0, fmt.Errorf("invalid Range header format")
+	}
+
+	s, err := strconv.Atoi(rangeValues[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid start value: %w", err)
+	}
+
+	e, err := strconv.Atoi(rangeValues[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid end value: %w", err)
+	}
+
+	return s, e, nil
+}
+
 func HandleSimpleDownloadRequest(f *proxy.Flow) error {
-	// update request grab the whole file.
-	// strip range header, we don't support partial uploads at all.
-	f.Request.Header.Del("range")
+	// handle streaming downloads in an ineffecient way. download whole file and return range.
+	byteRangeHeader := f.Request.Header.Get("range")
+	if byteRangeHeader != "" {
+		f.Request.Header.Set("x-original-byte-range", byteRangeHeader)
+		f.Request.Header.Del("range")
+	}
+
 	return nil
 }
+
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debugf("encrypted content len :%v", len(f.Response.Body))
 
@@ -32,6 +63,28 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 		f.Response.Body)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)
+
+	}
+
+	// check if this was as streaming/chunked download
+	byteRangeHeader := f.Request.Header.Get("x-original-byte-range")
+
+	if byteRangeHeader != "" {
+		log.Debugf("Grabbing requested byte range slice %v", byteRangeHeader)
+		start, end, err := parseRangeHeader(byteRangeHeader)
+
+		if err != nil {
+			return err
+		}
+
+		// If the range falls in the decrypted content, get the portion of the content
+		// otherwise, ignore the range.
+		if end <= len(unencryptedBytes)-1 {
+			unencryptedByteSlice := unencryptedBytes[start:end]
+			unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
+		} else {
+			log.Warnf("Reagested range [%v - %v] is out of boundary. The decryped content boudary is [0 - %v]", start, end, len(unencryptedBytes)-1)
+		}
 
 	}
 

@@ -45,7 +45,7 @@ func LoadConfig() *Config {
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
 	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsBucketKeyMapping := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
+	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
 
 	flag.BoolVar(&config.Version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -58,7 +58,7 @@ func LoadConfig() *Config {
 	flag.IntVar(&config.DumpLevel, "dump_level", 0, "dump level: 0 - header, 1 - header + body")
 	flag.StringVar(&config.Upstream, "upstream", "", "upstream proxy")
 	// "*:global-key" or "bucket/path:project/key,bucket2:key2" but the global key overrides all the other keys
-	flag.StringVar(&config.kmsBucketKeyMappingString, "kms_bucket_key_mappings", defaultKmsBucketKeyMapping, "Its the bucket name to KMS key map, payload will be encrypted with the bucket to key stored in KMS. KMS key should be in the format: projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>")
+	flag.StringVar(&config.kmsBucketKeyMappingString, "kms_bucket_key_mappings", defaultKmsBucketKeyMappingString, "Maps Bucket name to KMS keys. Proxy encrypts object uploaded to BUCKET with KEY stored in KMS. Setting BUCKET to * will encrypt/decrypt all GCS calls. Format is `BUCKET:KEY1,BUCKET2:KEY2` for example: `mygcsbucket:projects/<project_id>/locations/<global|region>/keyRings/<key_ring>/cryptoKeys/<key>`")
 
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
