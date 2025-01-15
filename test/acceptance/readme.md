@@ -25,103 +25,43 @@ To run the fuji-7B training job with the proxy as a sidecar, following the steps
 
 1. Create a standard zone(us-central2-b) GKE cluster and a nodepool with TPU(ct4p-hightpu-4t 2x2x4). Example:
 
-  
-
 ```
-
-  
-
 gcloud container node-pools create axlearn-fuji \
-
-  
-
 --location=us-central2-b \
-
-  
-
 --cluster=eshen-gcs-proxy \ # change to your cluster
-
-  
-
 --node-locations=us-central2-b \
-
-  
-
 --machine-type=ct4p-hightpu-4t \
-
-  
-
 --tpu-topology 2x2x4 \
-
-  
-
 --spot \
-
-  
-
 --num-nodes=4 \
-
-  
-
 --scopes=https://www.googleapis.com/auth/cloud-platform
-
-  
-
 ```
 
   
 
 2. Build docker images for both Proxy and Axlearn following [docker](#build-docker-images) section. 
 3. Connect to your cluster
-
-  
-
 ```
-
-  
-
 gcloud container clusters get-credentials eshen-gcs-proxy \ # change to your cluster
-
-  
-
 --zone us-central2-b \
-
-  
-
 --project cool-machine-learning # change to your project
-
-  
-
 ```
-
-  
-
-  
-
+3. Install the latest JobSet in the cluster
+```
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/jobset/releases/download/v0.7.2/manifests.yaml
+``` 
 3. Run the training job by applying [multi-host-job-gcs-proxy.yaml](./multi-host-job-gcs-proxy.yaml)
 
   
 
 ```
-
-  
-
 kubctl apply -f multi-host-job-gcs-proxy.yaml
-
-  
-
 ```
-
-  
-
 4. Once the job starts running, you'd see the log like [this](./run-restore-with-proxy.log). Wait until several checkpoints have been written to your output GCS bucket. Then stop and remove the training job.
 
 ```
-
 kubctl delete jobset fuji-multihost-job-gcs-proxy
-
 ```
-
 5. Run step 3 to restart the job to restore from the most recent checkpoint.
 
   
@@ -150,61 +90,27 @@ Make sure you use the images that you have built from the [docker](#build-docker
 ## Proxy Container(sidecar)
 
 ```
-
 # - name: GCS_PROXY_DISABLE_ENCRYPTION # Disable encryption by settting to true
-
-  
-
 # value: "true"
-
-  
-
 - name: DEBUG_LEVEL # Default is 0 which is INFO
-
-  
-
-value: "1"
-
-  
-
+  value: "1"
 - name: PROXY_CERT_PATH
-
-  
-
-value: "/proxy/certs" # don't change this
-
-  
-
+  value: "/proxy/certs" # don't change this
 - name: GCP_KMS_BUCKET_KEY_MAPPING # change it to your kms key
-
-  
-
-value: "eshen-gcs-proxy-acceptance:projects/cool-machine-learning/locations/global/keyRings/proxy/cryptoKeys/proxy-kek"
-
-  
-
+  value: "eshen-gcs-proxy-acceptance:projects/cool-machine-learning/locations/global/keyRings/proxy/cryptoKeys/proxy-kek"
 ```
 
 ## Axlearn Container
-
 ```
-
 - name: CONFIG
-
-value: fuji-7B-s1-b32 # don't change
-
+  value: fuji-7B-s1-b32 # don't change
 - name: OUTPUT_DIR
-
-value: "gs://eshen-gcs-proxy-acceptance" # change it to your GCS bucket. It should be the bucket in the KEP_MAPPING env for the proxy
-
+  value: "gs://eshen-gcs-proxy-acceptance" # change it to your GCS bucket. It should be the bucket in the KEP_MAPPING env for the proxy
 - name: https_proxy # don't chnage
 
-value: "http://127.0.0.1:9080"
-
+  value: "http://127.0.0.1:9080"
 - name: GCS_RETRY_CONFIG_MAX_RETRIES # don't change
-
-value: "0"
-
+  value: "0"
 ```
 
   
@@ -228,17 +134,14 @@ Notes:
 1. To get the time that it takes to write a checkpoint, look for the following line in the log
 
 ```
-
 23:03:15.159983 135894283523776 checkpointer.py:510] Serialization of gs://eshen-gcs-proxy-acceptance/checkpoints/step_00000100 completed in 57.10629372299809 seconds.
-
 ```
 
 2. To get the time that it takes to restore a checkpoint, look for the following lines in the log and calculate the time differences between the timestamp
 
 ```
-
 **23:10:50.390969** 132033253665664 checkpointer.py:539] Restoring checkpoint from directory gs://eshen-gcs-proxy-acceptance/checkpoints/step_00000200
 
 **23:11:29.364421** 132033253665664 checkpointer.py:1088] Restored state from ckpt at step 200
-
 ```
+3. A sample checkpoint step has about 288 objects (65.22GiB), which is typical. 

@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"bytes"
@@ -6,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -49,29 +56,36 @@ func HandleSimpleDownloadRequest(f *proxy.Flow) error {
 func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debugf("encrypted content len :%v", len(f.Response.Body))
 
-	log.Debug(fmt.Sprintf("Got data in HandleSimpleDownloadResponse %s", f.Response.Body))
-	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
+	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	// Update the response content with the decrypted content
-	unencryptedBytes, err := DecryptBytes(f.Request.Raw().Context(),
-		getKMSKeyName(bucketName), //config.KmsResourceName,
+	unencryptedBytes, err := crypto.DecryptBytes(f.Request.Raw().Context(),
+		util.GetKMSKeyName(bucketName),
 		f.Response.Body)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)
 
 	}
 
-	log.Debug("#### Decryption OK")
 	// check if this was as streaming/chunked download
 	byteRangeHeader := f.Request.Header.Get("x-original-byte-range")
 
 	if byteRangeHeader != "" {
 		log.Debugf("Grabbing requested byte range slice %v", byteRangeHeader)
 		start, end, err := parseRangeHeader(byteRangeHeader)
+
 		if err != nil {
 			return err
 		}
-		unencryptedByteSlice := unencryptedBytes[start:end]
-		unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
+
+		// If the range falls in the decrypted content, get the portion of the content
+		// otherwise, ignore the range.
+		if end <= len(unencryptedBytes)-1 {
+			unencryptedByteSlice := unencryptedBytes[start:end]
+			unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
+		} else {
+			log.Warnf("Reagested range [%v - %v] is out of boundary. The decryped content boudary is [0 - %v]", start, end, len(unencryptedBytes)-1)
+		}
+
 	}
 
 	f.Response.Body = unencryptedBytes
@@ -83,7 +97,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	f.Response.Header.Set("X-Goog-Stored-Content-Length", strconv.Itoa(contentLength))
 	f.Response.Header.Set("Content-Length", strconv.Itoa(contentLength))
 
-	hashValue := Base64MD5Hash(unencryptedBytes)
+	hashValue := crypto.Base64MD5Hash(unencryptedBytes)
 	f.Response.Header.Set("X-Goog-Hash", hashValue)
 
 	return nil

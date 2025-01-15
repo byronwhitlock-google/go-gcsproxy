@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package crypto
 
 import (
 	"context"
