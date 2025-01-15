@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"io"
@@ -10,26 +10,63 @@ import (
 	"strings"
 	"testing"
 
+	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
+	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 )
 
 //kms key name test
 func TestGetKMSKeyName(t *testing.T) {
-	config = &Config{KmsBucketKeyMapping: "test-bucket:test-key"}
-	cases := []struct {
+	testCases := []struct {
+		name        string
 		bucketName  string
-		kmsKeyName string
+		keyMapping  map[string]string
+		expectedKey string
 	}{
-		{"test-bucket", "test-key"},
-		{"test-bucket-1", ""},
-		{"*", ""},
+		{
+			name:        "NoMapping",
+			bucketName:  "test-bucket",
+			keyMapping:  nil,
+			expectedKey: "",
+		},
+		{
+			name:        "GlobalKey",
+			bucketName:  "test-bucket",
+			keyMapping:  map[string]string{"*": "global-key"},
+			expectedKey: "global-key",
+		},
+		{
+			name:       "BucketSpecificKey",
+			bucketName: "test-bucket",
+			keyMapping: map[string]string{
+				"*":          "global-key",
+				"test-bucket": "bucket-specific-key",
+			},
+			expectedKey: "global-key",
+		},
+		{
+			name:        "NoMatchingKey",
+			bucketName:  "non-existent-bucket",
+			keyMapping:  map[string]string{"test-bucket": "bucket-specific-key"},
+			expectedKey: "",
+		},
+		{
+			name:        "EmptyKeyMapping",
+			bucketName:  "test-bucket",
+			keyMapping:  map[string]string{},
+			expectedKey: "",
+
+		},
 	}
 
-	for _, c := range cases {
-		kmsKeyName := getKMSKeyName(c.bucketName)
-		if kmsKeyName != c.kmsKeyName {
-			t.Errorf("getKMSKeyName(%q) == %q, want %q", c.bucketName, kmsKeyName, c.kmsKeyName)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg.GlobalConfig = &cfg.Config{KmsBucketKeyMapping: tc.keyMapping}
+			actualKey := GetKMSKeyName(tc.bucketName)
+			if actualKey != tc.expectedKey {
+				t.Errorf("For bucket %q, expected key %q but got %q", tc.bucketName, tc.expectedKey, actualKey)
+			}
+		})
 	}
 }
 
@@ -43,7 +80,7 @@ func TestGetBucketNameFromGcsMetadata(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		actual := getBucketNameFromGcsMetadata(tc.input)
+		actual := GetBucketNameFromGcsMetadata(tc.input)
 		if actual != tc.expected {
 			t.Errorf("For input %v, expected %q but got %q", tc.input, tc.expected, actual)
 		}
@@ -60,7 +97,7 @@ func TestGenerateHeadersList(t *testing.T) {
 		},
 	}
 
-	headersMap, boundary := generateHeadersList(f)
+	headersMap, boundary := GenerateHeadersList(f)
 	
 	expectedHeaders := map[string]string{
 		"Accept-Encoding": "gzip, deflate",
@@ -88,12 +125,11 @@ func TestGetBucketNameFromRequestUri(t *testing.T) {
 		{"/download/storage/v1/b/ehorning-axlearn/o/README.md", "ehorning-axlearn"},
 		{"/storage/v1/b/my-bucket/o/my-object", "my-bucket"},
 		{"/upload/storage/v1/b/another-bucket/o", "another-bucket"},
-		//{"/invalid/path", ""},
 		{"/download/storage/v1/b/bucket/path/to/object/o/README.md","bucket"},
 	}
 
 	for _, tc := range testCases {
-		actual := getBucketNameFromRequestUri(tc.urlPath)
+		actual := GetBucketNameFromRequestUri(tc.urlPath)
 		if actual != tc.expected {
 			t.Errorf("For URL path %q, expected bucket name %q but got %q", tc.urlPath, tc.expected, actual)
 		}
@@ -116,7 +152,7 @@ func TestGenerateMetadata(t *testing.T) {
 
 	contentType := "text/plain"
 	objectName := "test-object"
-	metadata := generateMetadata(f, contentType, objectName)
+	metadata := GenerateMetadata(f, contentType, objectName)
 
 	expectedMetadata := map[string]interface{}{
 		"bucket":      "apple-lk-test2",
@@ -124,7 +160,7 @@ func TestGenerateMetadata(t *testing.T) {
 		"name":        "test-object",
 		"metadata": map[string]interface{}{
 			"x-unencrypted-content-length": len("test body"),
-			"x-md5Hash":                    Base64MD5Hash([]byte("test body")),
+			"x-md5Hash":                    crypto.Base64MD5Hash([]byte("test body")),
 		},
 	}
 

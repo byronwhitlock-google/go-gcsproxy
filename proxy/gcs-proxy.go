@@ -1,9 +1,16 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package proxy
 
 import (
-	"os"
 	"strings"
 
+	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
+	hdl "github.com/byronwhitlock-google/go-gcsproxy/proxy/handlers"
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -34,16 +41,10 @@ const (
 
 )
 
-func IsEncryptDisabled() bool {
-	if os.Getenv("GCS_PROXY_DISABLE_ENCRYPTION") == "" {
-		return false
-	}
-	return true
-}
-
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
-	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
-	if getKMSKeyName(bucketName) == "" {
+	util.CreateFirstMultipartMimeHeader()
+	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+	if util.GetKMSKeyName(bucketName) == "" {
 		return passThru
 	}
 	// GCS supports both hostnames
@@ -112,7 +113,7 @@ func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
 func (c *EncryptGcsPayload) Request(f *proxy.Flow) {
 
 	debugRequest(f)
-	if IsEncryptDisabled() {
+	if cfg.GlobalConfig.EncryptDisabled {
 		return
 	}
 
@@ -123,27 +124,27 @@ out:
 
 	case multiPartUpload:
 		// Parse the multipart request.
-		err = HandleMultipartRequest(f)
+		err = hdl.HandleMultipartRequest(f)
 		break out
 
 	case simpleDownload:
-		err = HandleSimpleDownloadRequest(f)
+		err = hdl.HandleSimpleDownloadRequest(f)
 		break out
 
 	case singlePartUpload:
-		err = ConvertSinglePartUploadtoMultiPartUpload(f)
+		err = hdl.ConvertSinglePartUploadtoMultiPartUpload(f)
 		break out
 
 	case metadataRequest:
-		err = HandleMetadataRequest(f)
+		err = hdl.HandleMetadataRequest(f)
 		break out
 
 	case resumableUploadPost:
-		err = HandleResumablePostRequest(f)
+		err = hdl.HandleResumablePostRequest(f)
 		break out
 
 	case resumableUploadPut:
-		err = HandleResumablePutRequest(f)
+		err = hdl.HandleResumablePutRequest(f)
 		break out
 	}
 	if err != nil {
@@ -162,7 +163,7 @@ func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 		log.Errorf("got invalid response code! '%s' '%v'......\n\n%s", f.Request.URL, f.Response.StatusCode, f.Response.Body)
 	}
 
-	if IsEncryptDisabled() {
+	if cfg.GlobalConfig.EncryptDisabled {
 		return
 	}
 
@@ -170,27 +171,27 @@ out:
 	switch m := InterceptGcsMethod(f); m {
 
 	case multiPartUpload:
-		err = HandleMultipartResponse(f)
+		err = hdl.HandleMultipartResponse(f)
 		break out
 
 	case simpleDownload:
-		err = HandleSimpleDownloadResponse(f)
+		err = hdl.HandleSimpleDownloadResponse(f)
 		break out
 
 	case singlePartUpload:
-		err = HandleSinglePartUploadResponse(f)
+		err = hdl.HandleSinglePartUploadResponse(f)
 		break out
 
 	case metadataRequest:
-		err = HandleMetadataResponse(f)
+		err = hdl.HandleMetadataResponse(f)
 		break out
 
 	case resumableUploadPost:
-		err = HandleResumablePostResponse(f)
+		err = hdl.HandleResumablePostResponse(f)
 		break out
 
 	case resumableUploadPut:
-		err = HandleResumablePutResponse(f)
+		err = hdl.HandleResumablePutResponse(f)
 		break out
 
 	}
@@ -202,7 +203,6 @@ out:
 	// recalculate content length
 	f.Response.ReplaceToDecodedBody()
 }
-
 func debugResponse(f *proxy.Flow) {
 	header := "<<<" + f.Id.String()
 	log.Debugf("%v url: %v %v", header, f.Request.Method, f.Request.URL.String())

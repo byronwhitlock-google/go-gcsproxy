@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"bytes"
@@ -11,6 +16,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -106,7 +113,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		gcsMetadataMap["metadata"] = make(map[string]interface{})
 	}
 
-	bucketName := getBucketNameFromGcsMetadata(gcsMetadataMap)
+	bucketName := util.GetBucketNameFromGcsMetadata(gcsMetadataMap)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -125,8 +132,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
-		encryptedData, err = EncryptBytes(f.Request.Raw().Context(),
-			getKMSKeyName(bucketName),
+		encryptedData, err = crypto.EncryptBytes(f.Request.Raw().Context(),
+			util.GetKMSKeyName(bucketName),
 			unencryptedFileContent.Bytes())
 
 		if err != nil {
@@ -145,7 +152,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	if ok {
 
 		customMetadata["x-unencrypted-content-length"] = len(unencryptedFileContent.String())
-		customMetadata["x-md5Hash"] = Base64MD5Hash(unencryptedFileContent.Bytes())
+		customMetadata["x-md5Hash"] = crypto.Base64MD5Hash(unencryptedFileContent.Bytes())
 	}
 
 	log.Debug(string(gcsObjectMetadataJson))
@@ -191,7 +198,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
 	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		Base64MD5Hash(unencryptedFileContent.Bytes()))
+		crypto.Base64MD5Hash(unencryptedFileContent.Bytes()))
 
 	return nil
 }
@@ -219,7 +226,6 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error marshaling to JSON: %v", err)
 	}
 
-	//log.Debug(jsonData)
 	f.Response.Body = jsonData
 	return nil
 }

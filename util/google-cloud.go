@@ -1,5 +1,14 @@
-package main
+/*
+Copyright 2025 Google.
 
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package util
+
+/*
+	This file provides functionality for resumable upload with subsequent PUT requests(a.k.a chunked upload)
+	It's currenly not used
+*/
 import (
 	"context"
 	"fmt"

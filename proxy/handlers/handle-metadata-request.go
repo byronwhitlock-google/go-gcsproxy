@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"encoding/json"
@@ -13,13 +18,6 @@ func HandleMetadataRequest(f *proxy.Flow) error {
 	log.Debug(fmt.Sprintf("HandleMetadataRequest got query string  %s", f.Request.URL.RawQuery))
 
 	queryString := f.Request.URL.Query()
-
-	/*
-		// Append field 'custom metadata' to be returned.
-		fields := queryString.Get("fields")
-		fields += ",metadata"
-		queryString.Set("fields", fields)
-	*/
 
 	// we delete all fields because there is no way to reliable filter without getting  on new  on new objects
 	queryString.Del("fields")

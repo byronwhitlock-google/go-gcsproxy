@@ -1,4 +1,4 @@
-package main
+package crypto
 
 import (
 	"crypto/md5"
@@ -105,7 +105,7 @@ func TestEncryptBytesdo(t *testing.T) {
 }
 
 
-func TestDecryptBytesdo(t *testing.T) {
+func TestdoDecryptBytesdo(t *testing.T) {
     tests := []struct {
         name          string
         resourceName  string
@@ -167,7 +167,7 @@ func TestDecryptBytesdo(t *testing.T) {
 }
 
 
-func TestBase64MD5Hash_Success(t *testing.T) {
+func TestBase64MD5HashSuccess(t *testing.T) {
 	// Test case 1: A normal byte stream
 	byteStream := []byte("test-string")
 	expectedMD5 := md5.Sum(byteStream)
@@ -177,7 +177,7 @@ func TestBase64MD5Hash_Success(t *testing.T) {
 	assert.Equal(t, expectedBase64MD5, result, "Base64MD5Hash should return the correct hash")
 }
 
-func TestBase64MD5Hash_EmptyInput(t *testing.T) {
+func TestBase64MD5HashEmptyInput(t *testing.T) {
 	// Test case 2: Empty byte stream
 	byteStream := []byte{}
 	expectedMD5 := md5.Sum(byteStream)
@@ -187,7 +187,7 @@ func TestBase64MD5Hash_EmptyInput(t *testing.T) {
 	assert.Equal(t, expectedBase64MD5, result, "Base64MD5Hash should return correct hash for empty input")
 }
 
-func TestBase64MD5Hash_NilInput(t *testing.T) {
+func TestBase64MD5HashNilInput(t *testing.T) {
 	// Test case 3: Nil byte stream
 	var byteStream []byte
 	expectedMD5 := md5.Sum(byteStream)

@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"bytes"
@@ -7,6 +12,8 @@ import (
 	"mime/multipart"
 	"strconv"
 
+	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -31,7 +38,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	log.Debugf("ConvertSinglePartUploadtoMultiPartUpload orgContentType: %v. Method changed to %v", orgContentType, f.Request.Method)
 
 	//  Change headers to use multipart
-	headersMap, boundary := generateHeadersList(f)
+	headersMap, boundary := util.GenerateHeadersList(f)
 	for key, value := range headersMap {
 		log.Debugf("%v: %v\n", key, value)
 		f.Request.Header.Set(key, value)
@@ -45,17 +52,17 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
 	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		Base64MD5Hash(f.Request.Body))
+		crypto.Base64MD5Hash(f.Request.Body))
 
 	f.Request.Header.Del("Expect")
 
 	// Generate Metadata to insert in body
-	metadata := generateMetadata(f, orgContentType, objectName)
+	metadata := util.GenerateMetadata(f, orgContentType, objectName)
 
 	// Encrypt data in body
-	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptBody, err := EncryptBytes(f.Request.Raw().Context(),
-		getKMSKeyName(bucketName),
+	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+	encryptBody, err := crypto.EncryptBytes(f.Request.Raw().Context(),
+		util.GetKMSKeyName(bucketName),
 		f.Request.Body)
 	if err != nil {
 		return fmt.Errorf("error encrypting  request: %v", err)
@@ -70,7 +77,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	}
 
 	// Adding First part
-	writer_part, err := multipartWriter.CreatePart(CreateFirstMultipartMimeHeader())
+	writer_part, err := multipartWriter.CreatePart(util.CreateFirstMultipartMimeHeader())
 	if err != nil {
 		return fmt.Errorf("failed to create first part in multipart-request: %v", err)
 	}
@@ -78,7 +85,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	writer_part.Write(marshalled_metadata)
 
 	// Adding second part
-	writer_part, err = multipartWriter.CreatePart(CreateSecondMultipartMimeHeader(orgContentType))
+	writer_part, err = multipartWriter.CreatePart(util.CreateSecondMultipartMimeHeader(orgContentType))
 	if err != nil {
 		return fmt.Errorf("failed to create second part in multipart-request: %v", err)
 	}
@@ -118,9 +125,9 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 }
 
 func HandleSinglePartUploadRequest(f *proxy.Flow) error {
-	bucketName := getBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptedData, err := EncryptBytes(f.Request.Raw().Context(),
-		getKMSKeyName(bucketName),
+	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+	encryptedData, err := crypto.EncryptBytes(f.Request.Raw().Context(),
+		util.GetKMSKeyName(bucketName),
 		f.Request.Body)
 
 	if err != nil {
@@ -135,7 +142,7 @@ func HandleSinglePartUploadRequest(f *proxy.Flow) error {
 
 	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
 	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		Base64MD5Hash(f.Request.Body))
+		crypto.Base64MD5Hash(f.Request.Body))
 
 	f.Request.Header.Set("gcs-proxy-unencrypted-file-size",
 		strconv.Itoa(len(f.Request.Body)))

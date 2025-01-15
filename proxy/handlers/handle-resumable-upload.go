@@ -1,4 +1,9 @@
-package main
+/*
+Copyright 2025 Google.
+
+This software is provided as-is, without warranty or representation for any use or purpose.
+*/
+package handlers
 
 import (
 	"encoding/json"
@@ -9,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,7 +23,7 @@ import (
 func HandleResumablePutRequest(f *proxy.Flow) error {
 
 	byteRangeHeader := f.Request.Header.Get("Content-Range")
-	start, end, size, err := parseByteRangeHeader(byteRangeHeader)
+	start, end, size, err := parseContentRangeHeader(byteRangeHeader)
 	if err != nil {
 		return err
 	}
@@ -81,7 +87,7 @@ func HandleResumablePutResponse(f *proxy.Flow) error {
 }
 
 // rangeString = "bytes 0-72355493/72355494"
-func parseByteRangeHeader(rangeStr string) (start int, end int, size int, err error) {
+func parseContentRangeHeader(rangeStr string) (start int, end int, size int, err error) {
 	// Regular expression to capture the start, end, and total values
 	re := regexp.MustCompile(`bytes (\d+)-(\d+)/(\d+)`)
 	matches := re.FindStringSubmatch(rangeStr)
@@ -135,7 +141,7 @@ func HandleResumablePostResponse(f *proxy.Flow) error {
 	// Check if request body has bucket name as pythonsdk does not give bucket name, coming from python sdk
 	_, exists := dataMap["bucket"]
 	if !exists {
-		dataMap["bucket"] = getBucketNameFromRequestUri(f.Request.URL.Path)
+		dataMap["bucket"] = util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	}
 
 	// uploader id comes from GCS so it is in the Response
