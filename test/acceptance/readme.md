@@ -17,7 +17,7 @@ The purpose of the acceptance testing is to ensure that Axlearn(ML framework) wo
 
   
 
-To run the fuji-7B training job with the proxy as a sidecar, following the steps below:
+To run the fuji-7B training job with the proxy as a sidecar,   following the steps below:
 
   
 
@@ -144,4 +144,3 @@ Notes:
 
 **23:11:29.364421** 132033253665664 checkpointer.py:1088] Restored state from ckpt at step 200
 ```
-3. A sample checkpoint step has about 288 objects (65.22GiB), which is typical. 
