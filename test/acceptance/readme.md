@@ -17,7 +17,7 @@ The purpose of the acceptance testing is to ensure that Axlearn(ML framework) wo
 
   
 
-To run the fuji-7B training job with the proxy as a sidecar, following the steps below:
+To run the fuji-7B training job with the proxy as a sidecar,   following the steps below:
 
   
 
