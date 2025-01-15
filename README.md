@@ -39,7 +39,7 @@ even Google from having access to their data.
 
 ### Usage (Server)
 
-1. Follow the [instructions](./docs/go-patch.md) to patch go
+1. If you are targeting Axlearn or Tensorflow, follow the [instructions](./docs/go-patch.md) to patch go
 1.  Build the `go-gcsproxy` binary:
     ```bash
     make
