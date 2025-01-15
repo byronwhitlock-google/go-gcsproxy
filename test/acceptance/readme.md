@@ -5,24 +5,10 @@
 
 # Overview
 
-  
-
 The purpose of the acceptance testing is to ensure that Axlearn(ML framework) workloads work with the gcs proxy. An Axlearn [fuji-7B training job](https://github.com/apple/axlearn/blob/main/axlearn/experiments/text/gpt/fuji.py) (on c4 dataset) is run on a single v4 pod slice with the gcs proxy as a sidecar container in a GKE cluster. The encrypt is performed by the proxy on checkpoints(every 100 steps) and the decrypt on resuming the training job from restoring the most recent checkpoint.
 
-  
-
-  
-
 # Instructions
-
-  
-
 To run the fuji-7B training job with the proxy as a sidecar,   following the steps below:
-
-  
-
-  
-
 1. Create a standard zone(us-central2-b) GKE cluster and a nodepool with TPU(ct4p-hightpu-4t 2x2x4). Example:
 
 ```
@@ -36,9 +22,6 @@ gcloud container node-pools create axlearn-fuji \
 --num-nodes=4 \
 --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
-
-  
-
 2. Build docker images for both Proxy and Axlearn following [docker](#build-docker-images) section. 
 3. Connect to your cluster
 ```
@@ -46,25 +29,22 @@ gcloud container clusters get-credentials eshen-gcs-proxy \ # change to your clu
 --zone us-central2-b \
 --project cool-machine-learning # change to your project
 ```
-3. Install the latest JobSet in the cluster
+4. Install the latest JobSet in the cluster
 ```
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/jobset/releases/download/v0.7.2/manifests.yaml
 ``` 
-3. Run the training job by applying [multi-host-job-gcs-proxy.yaml](./multi-host-job-gcs-proxy.yaml)
-
-  
+5. Run the training job by applying [multi-host-job-gcs-proxy.yaml](./multi-host-job-gcs-proxy.yaml)
 
 ```
 kubctl apply -f multi-host-job-gcs-proxy.yaml
 ```
-4. Once the job starts running, you'd see the log like [this](./run-restore-with-proxy.log). Wait until several checkpoints have been written to your output GCS bucket. Then stop and remove the training job.
+6. Once the job starts running, you'd see the log like [this](./run-restore-with-proxy.log). Wait until several checkpoints have been written to your output GCS bucket. Then stop and remove the training job.
 
 ```
 kubctl delete jobset fuji-multihost-job-gcs-proxy
 ```
-5. Run step 3 to restart the job to restore from the most recent checkpoint.
+7. Run step 5 to restart the job to restore from the most recent checkpoint.
 
-  
 # Build Docker Images
 ## Proxy
 ```
