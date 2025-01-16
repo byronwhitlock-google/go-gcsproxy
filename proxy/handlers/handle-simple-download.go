@@ -77,15 +77,21 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 			return err
 		}
 
-		// If the range falls in the decrypted content, get the portion of the content
-		// otherwise, ignore the range.
-		if end <= len(unencryptedBytes)-1 {
-			unencryptedByteSlice := unencryptedBytes[start:end]
-			unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
-		} else {
-			log.Warnf("Reagested range [%v - %v] is out of boundary. The decryped content boudary is [0 - %v]", start, end, len(unencryptedBytes)-1)
+		// bounds checking
+		if start > len(unencryptedBytes) {
+			return fmt.Errorf("requested start byte exceeds object length! sb: %v , len:%v", start, len(unencryptedBytes))
 		}
 
+		if end < 1 || end < start {
+			return fmt.Errorf("invalid byte range request: %v", byteRangeHeader)
+		}
+
+		if end > len(unencryptedBytes) {
+			end = len(unencryptedBytes) - 1
+		}
+
+		unencryptedByteSlice := unencryptedBytes[start:end]
+		unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
 	}
 
 	f.Response.Body = unencryptedBytes
