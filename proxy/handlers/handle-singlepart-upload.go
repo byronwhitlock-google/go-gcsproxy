@@ -35,7 +35,7 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 	orgContentType := f.Request.Header.Get("Content-Type")
 
 	f.Request.Method = "POST"
-	log.Debugf("ConvertSinglePartUploadtoMultiPartUpload orgContentType: %v. Method changed to ", orgContentType, f.Request.Method)
+	log.Debugf("ConvertSinglePartUploadtoMultiPartUpload orgContentType: %v. Method changed to %v", orgContentType, f.Request.Method)
 
 	//  Change headers to use multipart
 	headersMap, boundary := util.GenerateHeadersList(f)
