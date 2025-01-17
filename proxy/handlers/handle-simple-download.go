@@ -87,7 +87,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 		}
 
 		if end > len(unencryptedBytes) {
-			end = len(unencryptedBytes) - 1
+			end = len(unencryptedBytes)
 		}
 
 		unencryptedByteSlice := unencryptedBytes[start:end]
