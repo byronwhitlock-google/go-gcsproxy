@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -14,98 +15,101 @@ import (
 )
 
 // MockEncryptor is a mock implementation of the crypto.Encryptor interface.
-type MockEncryptor struct {
+type MockOtherPackages struct {
 	mock.Mock
 }
 
-func (m *MockEncryptor) Encrypt(ctx context.Context, kmsKeyName string, plaintext []byte) ([]byte, error) {
-	args := m.Called(ctx, kmsKeyName, plaintext)
-	return args.Get(0).([]byte), args.Error(1)
+func (m *MockOtherPackages) GetCryptoEncryptBytes(ctx context.Context, kmsKeyName string, plaintext []byte) ([]byte, error) {
+	//args := m.Called(ctx, kmsKeyName, plaintext)
+	return []byte("encrypted-content"), nil
 }
 
-func (m *MockEncryptor) Decrypt(ctx context.Context, kmsKeyName string, ciphertext []byte) ([]byte, error) {
-	args := m.Called(ctx, kmsKeyName, ciphertext)
-	return args.Get(0).([]byte), args.Error(1)
-
+func (m *MockOtherPackages) GetCryptoBase64MD5Hash( plaintext []byte) (string) {
+	return "i19y/5OSfdA3/sOa9Ml+Aw=="
 }
 
-// func TestHandleMultipartRequest(t *testing.T) {
-// 	// Test cases for various scenarios
-// 	testCases := []struct {
-// 		name           string
-// 		contentType    string
-// 		requestBody    []byte
-// 		expectedError  string
-// 		mockSetup      func(m *MockEncryptor)
-// 		expectedBody   []byte // Add this field
-// 		kmsKeyName     string
-// 	}{
-// 		{
-// 			name:        "Success",
-// 			contentType: "multipart/related; boundary=\"foo\"",
-// 			requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
-// 			mockSetup: func(m *MockEncryptor) {
-// 				m.On("Encrypt", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return([]byte("encrypted-content"), nil)
-// 			},
-// 			expectedBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{\"metadata\":{\"x-md5Hash\":\"i19y/5OSfdA3/sOa9Ml+Aw==\",\"x-unencrypted-content-length\":17}}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nencrypted-content\r\n--foo--"),
-// 			kmsKeyName:   "test-kms-key",
-// 		},
-// 		{
-// 			name:        "InvalidContentType",
-// 			contentType: "invalid-content-type",
-// 			requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
-// 			expectedError: "error parsing content type :",
-// 		},
-// 		{
-// 			name:        "EncryptError",
-// 			contentType: "multipart/related; boundary=\"foo\"",
-// 			requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
-// 			mockSetup: func(m *MockEncryptor) {
-// 				m.On("Encrypt", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return(nil, fmt.Errorf("encryption error"))
-// 			},
-// 			expectedError: "error encrypting request:",
-// 			kmsKeyName:   "test-kms-key",
-// 		},
-// 	}
+func (m *MockOtherPackages) GetUtilGetBucketNameFromGcsMetadata(gcsmetadata map[string]interface{})(string) {
+	return "test-bucket"
+}
 
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			mockEncryptor := new(MockEncryptor)
-// 			if tc.mockSetup != nil {
-// 				tc.mockSetup(mockEncryptor)
-// 			}
+func (m *MockOtherPackages) GetUtilGetKMSKeyName(bucketName string)(string) {
+	return "test-kms-key"
+}
 
-// 			originalEncryptBytes := crypto.EncryptBytes
-// 			crypto.EncryptBytes = mockEncryptor.Encrypt
-// 			defer func() { crypto.EncryptBytes = originalEncryptBytes }()
 
-// 			f := &proxy.Flow{
-// 				Request: &proxy.Request{
-// 					Header: http.Header{"Content-Type": []string{tc.contentType}},
-// 					Body:   tc.requestBody,
-// 				},
-// 			}
+func TestHandleMultipartRequest(t *testing.T) {
+	// Test cases for various scenarios
+	testCases := []struct {
+		name           string
+		contentType    string
+		requestBody    []byte
+		expectedError  string
+		mockSetup      func(m *MockOtherPackages)
+		expectedBody   []byte // Add this field
+		kmsKeyName     string
+	}{
+		{
+			name:        "Success",
+			contentType: "multipart/related; boundary=\"foo\"",
+			requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
+			mockSetup: func(m *MockOtherPackages) {
+				m.On("GetUtilGetBucketNameFromGcsMetadata", mock.Anything).Return("test-bucket")
+				m.On("GetUtilGetKMSKeyName", "test-bucket").Return("test-kms-key")
+				m.On("GetCryptoEncryptBytes", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return([]byte("encrypted-content"), nil)
+				m.On("GetCryptoBase64MD5Hash", []byte("unencrypted-content")).Return("i19y/5OSfdA3/sOa9Ml+Aw==")
 
-// 			// Set up mock for GetKMSKeyName
-// 			originalGetKMSKeyName := util.GetKMSKeyName
-// 			util.GetKMSKeyName = func(bucketName string) string {
-// 				return tc.kmsKeyName
-// 			}
-// 			defer func() { util.GetKMSKeyName = originalGetKMSKeyName }()
+			},
+			expectedBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{\"metadata\":{\"x-md5Hash\":\"i19y/5OSfdA3/sOa9Ml+Aw==\",\"x-unencrypted-content-length\":17}}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nencrypted-content\r\n--foo--"),
+			kmsKeyName:   "test-kms-key",
+		},
+		// {
+		// 	name:        "InvalidContentType",
+		// 	contentType: "invalid-content-type",
+		// 	requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
+		// 	expectedError: "error parsing content type :",
+		// },
+		// {
+		// 	name:        "EncryptError",
+		// 	contentType: "multipart/related; boundary=\"foo\"",
+		// 	requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
+		// 	mockSetup: func(m *MockOtherPackages) {
+		// 		m.On("Encrypt", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return(nil, fmt.Errorf("encryption error"))
+		// 	},
+		// 	expectedError: "error encrypting request:",
+		// 	kmsKeyName:   "test-kms-key",
+		// },
+	}
 
-// 			err := HandleMultipartRequest(f)
 
-// 			if tc.expectedError != "" {
-// 				assert.ErrorContains(t, err, tc.expectedError)
-// 			} else {
-// 				assert.NoError(t, err)
-// 				assert.Equal(t, tc.expectedBody, f.Request.Body)
-// 			}
-// 			mockEncryptor.AssertExpectations(t)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockOtherPackages := new(MockOtherPackages)
+			if tc.mockSetup != nil {
+				tc.mockSetup(mockOtherPackages)
+			}
+			
 
-// 		})
-// 	}
-// }
+			f := &proxy.Flow{
+				Request: &proxy.Request{
+					Header: http.Header{"Content-Type": []string{tc.contentType}},
+					Body:   tc.requestBody,
+				},
+			}
+
+			err := HandleMultipartRequestWrapper(f, mockOtherPackages)
+			fmt.Println(err)
+
+			// if tc.expectedError != "" {
+			// 	assert.ErrorContains(t, err, tc.expectedError)
+			// } else {
+			// 	assert.NoError(t, err)
+			// 	assert.Equal(t, tc.expectedBody, f.Request.Body)
+			// }
+			// mockOtherPackages.AssertExpectations(t)
+
+		})
+	}
+}
 
 // Test helper functions
 func TestGetMultipartMimeHeader(t *testing.T) {
