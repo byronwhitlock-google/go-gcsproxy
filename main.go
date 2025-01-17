@@ -12,6 +12,8 @@ import (
 	"fmt"
 	rawLog "log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
 	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
@@ -24,6 +26,15 @@ import (
 var Version = ".3"
 
 func main() {
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		s := <-sigc
+		log.Info("Signal Caught: ", s)
+		os.Exit(0)
+	}()
+
 	initConfig()
 	runner := gcsproxy.NewProxyRunner(cfg.GlobalConfig)
 	err := runner.Start()
