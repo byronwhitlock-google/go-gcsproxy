@@ -1,8 +1,8 @@
 OUT := bin/go-gcsproxy
 PKG := github.com/byronwhitlock-google/go-gcsproxy
 VERSION := $(shell git describe --always --long --dirty)
-PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
-GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
+#PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/ | grep -v /test/)
+GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v /test/)
 
 $(info Go binary location: $(shell which go))
 
@@ -12,10 +12,10 @@ server:
 	go build -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
 
 test:
-	@go test -short ${PKG_LIST}
+	@go test -short ${GO_FILES}
 
 vet:
-	@go vet ${PKG_LIST}
+	@go vet ${GO_FILES}
 
 lint:
 	@for file in ${GO_FILES} ;  do \
@@ -23,7 +23,7 @@ lint:
 	done
 
 static: vet lint
-	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X main.version=${VERSION}" ${PKG}
+A	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X main.version=${VERSION}" ${PKG}
 
 run: server
 	./${OUT}
