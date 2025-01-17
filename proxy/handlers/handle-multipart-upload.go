@@ -7,6 +7,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -41,7 +42,43 @@ func GetMultipartMimeHeader(part *multipart.Part) textproto.MIMEHeader {
 	return mimeHeader
 }
 
+type OtherPackagesInterface interface {
+	GetCryptoEncryptBytes(ctx context.Context, kmsKeyName string, plaintext []byte) ([]byte, error)
+	GetCryptoBase64MD5Hash(plaintext []byte) (string)
+	GetUtilGetBucketNameFromGcsMetadata(gcsmetadata map[string]interface{})(string)
+	GetUtilGetKMSKeyName(bucketName string)(string)
+}
+
+type OtherPackages struct {
+}
+
+func (op *OtherPackages) GetCryptoEncryptBytes (ctx context.Context, resourceName string, bytesToEncrypt []byte)([]byte, error){
+	return crypto.EncryptBytes(ctx, resourceName, bytesToEncrypt)
+}
+
+
+func (op *OtherPackages) GetCryptoBase64MD5Hash (bytes []byte)(string){
+	return crypto.Base64MD5Hash(bytes)
+}
+
+func (op *OtherPackages) GetUtilGetBucketNameFromGcsMetadata (gcsmetadata map[string]interface{})(string){
+	return util.GetBucketNameFromGcsMetadata(gcsmetadata)
+}
+
+func (op *OtherPackages) GetUtilGetKMSKeyName (bucketName string)(string){
+	return util.GetKMSKeyName(bucketName)
+}
+
+
+
 func HandleMultipartRequest(f *proxy.Flow) error {
+	var op=OtherPackages{}
+	err:=HandleMultipartRequestWrapper(f ,op)
+	return err
+}
+
+
+func HandleMultipartRequestWrapper(f *proxy.Flow,op OtherPackagesInterface) error {
 
 	// Extract the boundary from the Content-Type header.
 	contentType := f.Request.Header.Get("Content-Type")
@@ -113,7 +150,9 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		gcsMetadataMap["metadata"] = make(map[string]interface{})
 	}
 
-	bucketName := util.GetBucketNameFromGcsMetadata(gcsMetadataMap)
+	bucketName := op.GetUtilGetBucketNameFromGcsMetadata(gcsMetadataMap)
+	keyName := op.GetUtilGetKMSKeyName(bucketName)
+
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -132,8 +171,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
-		encryptedData, err = crypto.EncryptBytes(f.Request.Raw().Context(),
-			util.GetKMSKeyName(bucketName),
+		encryptedData, err = op.GetCryptoEncryptBytes(f.Request.Raw().Context(),
+			keyName,
 			unencryptedFileContent.Bytes())
 
 		if err != nil {
@@ -152,7 +191,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	if ok {
 
 		customMetadata["x-unencrypted-content-length"] = len(unencryptedFileContent.String())
-		customMetadata["x-md5Hash"] = crypto.Base64MD5Hash(unencryptedFileContent.Bytes())
+		customMetadata["x-md5Hash"] = op.GetCryptoBase64MD5Hash(unencryptedFileContent.Bytes())
 	}
 
 	log.Debug(string(gcsObjectMetadataJson))
@@ -198,7 +237,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 	// save the original md5 has or gsutil/gcloud will delete after upload if it sees it is different
 	f.Request.Header.Set("gcs-proxy-original-md5-hash",
-		crypto.Base64MD5Hash(unencryptedFileContent.Bytes()))
+		op.GetCryptoBase64MD5Hash(unencryptedFileContent.Bytes()))
 
 	return nil
 }
@@ -213,7 +252,7 @@ func HandleMultipartResponse(f *proxy.Flow) error {
 		return fmt.Errorf("error unmarshalling JSON: %v", err)
 	}
 	log.Debug(jsonResponse)
-
+	
 	// update the response with the orginal md5 hash so gsutil/gcloud does not complain
 	jsonResponse["md5Hash"] = f.Request.Header.Get("gcs-proxy-original-md5-hash")
 	jsonResponse["size"], err = strconv.Atoi(f.Request.Header.Get("gcs-proxy-unencrypted-file-size"))

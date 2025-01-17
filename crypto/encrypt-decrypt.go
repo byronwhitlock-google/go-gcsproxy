@@ -36,11 +36,33 @@ func Base64MD5Hash(byteStream []byte) string {
 	return base64MD5Hash
 }
 
-// Encrypt bytes with KMS key referenced by resourceName in the format:
-// projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
-	// Construct the full key URI for Google Cloud KMS
-	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
+func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error){
+	kmsClient,err := GetKmsClient(ctx, resourceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
+	}
+	encryptedBytes, err:= doEncryptBytes(kmsClient, resourceName,bytesToEncrypt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt bytes: %v", err)
+	}
+	return encryptedBytes,nil
+
+}
+
+func DecryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error){
+	kmsClient,err := GetKmsClient(ctx, resourceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
+	}
+	decryptedBytes, err:= doDecryptBytes(kmsClient, resourceName,bytesToDecrypt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt bytes: %v", err)
+	}
+	return decryptedBytes,nil
+
+}
+
+func GetKmsClient(ctx context.Context, resourceName string)(registry.KMSClient,error){
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
 	// Create a KMS client
@@ -49,21 +71,30 @@ func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 		return nil, fmt.Errorf("failed to create KMS client: %v", err)
 	}
 
-	// Create a KMS AEAD client
+	registry.RegisterKMSClient(kmsClient)
+	return kmsClient,nil
+
+}
+
+// Encrypt bytes with KMS key referenced by resourceName in the format:
+// projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
+func doEncryptBytes(kmsClient registry.KMSClient, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
+	// Construct the full key URI for Google Cloud KMS
+	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
+
+	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
+
 	kmsAEAD, err := kmsClient.GetAEAD(keyURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS AEAD client: %v", err)
 	}
 
-	// 2. Register the KMS AEAD primitive wrapper.
-	registry.RegisterKMSClient(kmsClient)
-
-	// 3. Create the KMS-backed envelope AEAD.
+	// Create the KMS-backed envelope AEAD.
 	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)
 	if envAEAD == nil {
-		return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
+		return nil, fmt.Errorf("failed to create KMS AEAD envelope")
 	}
-
+	
 	// Encrypt the bytes
 	aad := []byte("")
 	encryptedBytes, err := envAEAD.Encrypt(bytesToEncrypt, aad)
@@ -76,24 +107,15 @@ func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 
 // Decrypts bytes with using KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
-func DecryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
+func doDecryptBytes(kmsClient registry.KMSClient, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
-
-	// Create a KMS client
-	kmsClient, err := gcpkms.NewClientWithOptions(ctx, keyURI /*, option.WithCredentialsFile("path/to/credentials.json")*/)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create KMS client: %v", err)
-	}
 
 	// Create a KMS AEAD client
 	kmsAEAD, err := kmsClient.GetAEAD(keyURI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create KMS AEAD client: %v", err)
 	}
-
-	// Register the KMS AEAD primitive wrapper.
-	registry.RegisterKMSClient(kmsClient)
 
 	// Create the KMS-backed envelope AEAD.
 	envAEAD := aead.NewKMSEnvelopeAEAD2(aead.AES256GCMKeyTemplate(), kmsAEAD)

@@ -2,12 +2,7 @@ module github.com/byronwhitlock-google/go-gcsproxy
 
 go 1.23
 
-require (
-	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/net v0.32.0
-	golang.org/x/oauth2 v0.24.0
-	google.golang.org/api v0.210.0
-)
+require github.com/sirupsen/logrus v1.9.3
 
 require (
 	cel.dev/expr v0.16.1 // indirect
@@ -35,6 +30,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/samber/lo v1.47.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
@@ -51,9 +47,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.30.0 // indirect
+	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
+	google.golang.org/api v0.210.0 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241118233622-e639e219e697 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241118233622-e639e219e697 // indirect
