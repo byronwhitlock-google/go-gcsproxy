@@ -11,12 +11,11 @@ import (
 
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-// MockEncryptor is a mock implementation of the crypto.Encryptor interface.
+// MockEncryptor is a mock implementation of the OtherPackagesInterface interface.
 type MockOtherPackages struct {
-	mock.Mock
+	//mock.Mock
 }
 
 func (m *MockOtherPackages) GetCryptoEncryptBytes(ctx context.Context, kmsKeyName string, plaintext []byte) ([]byte, error) {
@@ -24,7 +23,7 @@ func (m *MockOtherPackages) GetCryptoEncryptBytes(ctx context.Context, kmsKeyNam
 	return []byte("encrypted-content"), nil
 }
 
-func (m *MockOtherPackages) GetCryptoBase64MD5Hash( plaintext []byte) (string) {
+func (m *MockOtherPackages) GetCryptoBase64MD5Hash(plaintext []byte) (string) {
 	return "i19y/5OSfdA3/sOa9Ml+Aw=="
 }
 
@@ -44,7 +43,7 @@ func TestHandleMultipartRequest(t *testing.T) {
 		contentType    string
 		requestBody    []byte
 		expectedError  string
-		mockSetup      func(m *MockOtherPackages)
+		//mockSetup      func(m *MockOtherPackages)
 		expectedBody   []byte // Add this field
 		kmsKeyName     string
 	}{
@@ -52,13 +51,13 @@ func TestHandleMultipartRequest(t *testing.T) {
 			name:        "Success",
 			contentType: "multipart/related; boundary=\"foo\"",
 			requestBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nunencrypted-content\r\n--foo--"),
-			mockSetup: func(m *MockOtherPackages) {
-				m.On("GetUtilGetBucketNameFromGcsMetadata", mock.Anything).Return("test-bucket")
-				m.On("GetUtilGetKMSKeyName", "test-bucket").Return("test-kms-key")
-				m.On("GetCryptoEncryptBytes", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return([]byte("encrypted-content"), nil)
-				m.On("GetCryptoBase64MD5Hash", []byte("unencrypted-content")).Return("i19y/5OSfdA3/sOa9Ml+Aw==")
+			// mockSetup: func(m *MockOtherPackages) {
+			// 	//m.On("GetUtilGetBucketNameFromGcsMetadata", mock.Anything).Return("test-bucket")
+			// 	//m.On("GetUtilGetKMSKeyName", "test-bucket").Return("test-kms-key")
+			// 	//m.On("GetCryptoEncryptBytes", mock.Anything, "test-kms-key", []byte("unencrypted-content")).Return([]byte("encrypted-content"), nil)
+			// 	//m.On("GetCryptoBase64MD5Hash", []byte("unencrypted-content")).Return("i19y/5OSfdA3/sOa9Ml+Aw==")
 
-			},
+			// },
 			expectedBody: []byte("--foo\r\nContent-Type: application/json\r\n\r\n{\"metadata\":{\"x-md5Hash\":\"i19y/5OSfdA3/sOa9Ml+Aw==\",\"x-unencrypted-content-length\":17}}\r\n--foo\r\nContent-Type: text/plain\r\n\r\nencrypted-content\r\n--foo--"),
 			kmsKeyName:   "test-kms-key",
 		},
@@ -83,10 +82,11 @@ func TestHandleMultipartRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockOtherPackages := new(MockOtherPackages)
-			if tc.mockSetup != nil {
-				tc.mockSetup(mockOtherPackages)
-			}
+			//mockOtherPackages := new(MockOtherPackages)
+			mockOtherPackages := &MockOtherPackages{}
+			// if tc.mockSetup != nil {
+			// 	tc.mockSetup(mockOtherPackages)
+			// }
 			
 
 			f := &proxy.Flow{

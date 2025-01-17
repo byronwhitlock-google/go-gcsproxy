@@ -52,22 +52,24 @@ type OtherPackagesInterface interface {
 type OtherPackages struct {
 }
 
-func (OP OtherPackages) GetCryptoEncryptBytes (ctx context.Context, resourceName string, bytesToEncrypt []byte)([]byte, error){
+func (op *OtherPackages) GetCryptoEncryptBytes (ctx context.Context, resourceName string, bytesToEncrypt []byte)([]byte, error){
 	return crypto.EncryptBytes(ctx, resourceName, bytesToEncrypt)
 }
 
 
-func (OP OtherPackages) GetCryptoBase64MD5Hash(bytes []byte)(string){
+func (op *OtherPackages) GetCryptoBase64MD5Hash (bytes []byte)(string){
 	return crypto.Base64MD5Hash(bytes)
 }
 
-func(OP OtherPackages) GetUtilGetBucketNameFromGcsMetadata(gcsmetadata map[string]interface{})(string){
+func (op *OtherPackages) GetUtilGetBucketNameFromGcsMetadata (gcsmetadata map[string]interface{})(string){
 	return util.GetBucketNameFromGcsMetadata(gcsmetadata)
 }
 
-func(OP OtherPackages) GetUtilGetKMSKeyName(bucketName string)(string){
+func (op *OtherPackages) GetUtilGetKMSKeyName (bucketName string)(string){
 	return util.GetKMSKeyName(bucketName)
 }
+
+
 
 func HandleMultipartRequest(f *proxy.Flow) error {
 	var op=OtherPackages{}
