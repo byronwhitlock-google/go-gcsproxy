@@ -86,12 +86,10 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 			return fmt.Errorf("invalid byte range request: %v", byteRangeHeader)
 		}
 
-		if end > len(unencryptedBytes) {
+		if end >= len(unencryptedBytes)-1 {
 			end = len(unencryptedBytes)
 		}
-		if end <= len(unencryptedBytes) {
-			end = len(unencryptedBytes)
-		}
+		
 
 		unencryptedByteSlice := unencryptedBytes[start:end]
 		unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
