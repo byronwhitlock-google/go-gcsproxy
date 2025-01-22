@@ -1,0 +1,9 @@
+[submodule "test/regression/helpers/bats-support"]
+	path = test/regression/helpers/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "test/regression/helpers/bats-core"]
+	path = test/regression/helpers/bats-core
+	url = https://github.com/bats-core/bats-core.git
+[submodule "test/regression/helpers/bats-assert"]
+	path = test/regression/helpers/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
