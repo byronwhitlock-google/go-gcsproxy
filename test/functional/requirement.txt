@@ -2,3 +2,6 @@ pytest
 # copied it from ajax. On Apple silicon machines install tensorflow-text first,
 # https://github.com/apple/axlearn/blob/1af2ba8714a0a88aaf839841291b12f87e132eb4/docs/01-start.md
 axlearn[core] @git+https://github.com/apple/axlearn.git@1af2ba8714a0a88aaf839841291b12f87e132eb4
+google-auth
+google-auth-httplib2
+requests
