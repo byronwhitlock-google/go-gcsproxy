@@ -1,5 +1,10 @@
 # Functional testing
 
+Functional testing is intented to test various clients with the proxy. The targed clients include:
+* [Axlearn](./test_axlearn_tf.py) -- A ML framework that uses TF libaries to access data in GCS.
+* [JSON API](./test_gcs_jsonapi.py) -- Test GCS JSON API directly.
+* GCS SDK(TBD) -- Test with GCS python client SDK.
+
 To run these test, you can use the included DOCKERFILE via docker or podman.
 
 ## Certificates
