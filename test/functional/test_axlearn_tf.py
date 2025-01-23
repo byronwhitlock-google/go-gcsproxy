@@ -51,7 +51,7 @@ TEST_BUCKET = os.environ.get(
 OBJECT_NAME = "func-test-object"
 OBJECT_CONTENT = "testing object content"
 
-TEST_UNIQUE_FOLDER = str(int(time.time() * 1000))
+TEST_UNIQUE_FOLDER = str(int(time.time() * 1000)) + "-test-axlearn"
 if os.environ.get("https_proxy"):
     TEST_UNIQUE_FOLDER += "-with-proxy"
 

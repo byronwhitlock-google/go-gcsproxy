@@ -2,7 +2,7 @@
 #
 # This software is provided as-is, without warranty or representation for any use or purpose.
 """
-Proxy funtioanl testing for GCS clients such as json API and SDK
+Proxy funtioanl testing for clients using JSON API directly
 
 Setup:
   Set the following the enviroment variables:
@@ -12,7 +12,7 @@ Setup:
    -- CURL_CA_BUNDLE: Mitmproxy self-signed ca cert. Required
 
 Usage:
-  >>> pytest -v -s --log-cli-level=INFO test_gcs_clients.py
+  >>> pytest -v -s --log-cli-level=INFO test_gcs_jsonapi.py
 
 """
 import os
@@ -42,7 +42,7 @@ TEST_BUCKET = os.environ.get(
 OBJECT_NAME = "func-test-object"
 OBJECT_CONTENT = "testing object content"
 
-TEST_UNIQUE_FOLDER = str(int(time.time() * 1000))
+TEST_UNIQUE_FOLDER = str(int(time.time() * 1000)) + "-test-jsonapi"
 if os.environ.get("https_proxy"):
     TEST_UNIQUE_FOLDER += "-with-proxy"
 
