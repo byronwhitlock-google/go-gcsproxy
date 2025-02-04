@@ -10,11 +10,25 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/google/tink/go/aead"
 	"github.com/google/tink/go/core/registry"
 	"github.com/google/tink/go/integration/gcpkms"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+)
+
+const scopeName = "github.com/byronwhitlock-google/go-gcsproxy"
+
+var (
+	otelEnabled = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	Meter       = otel.Meter(scopeName)
+	EncryptTime metric.Float64Gauge
+	DecryptTime metric.Float64Gauge
 )
 
 func Base64MD5Hash(byteStream []byte) string {
@@ -39,6 +53,9 @@ func Base64MD5Hash(byteStream []byte) string {
 // Encrypt bytes with KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byte) ([]byte, error) {
+	// Capture the encryption latency
+	latencyStart := time.Now()
+
 	// Construct the full key URI for Google Cloud KMS
 	//projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
@@ -71,12 +88,21 @@ func EncryptBytes(ctx context.Context, resourceName string, bytesToEncrypt []byt
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
 
+	elapsed := time.Since(latencyStart).Seconds()
+	requestId, ok := ctx.Value("requestid").(string)
+	if otelEnabled != "" && ok {
+		metricAttribute := attribute.String("gcsproxy-request-id", requestId)
+		EncryptTime.Record(ctx, elapsed, metric.WithAttributes(metricAttribute))
+	}
+
 	return encryptedBytes, nil
 }
 
 // Decrypts bytes with using KMS key referenced by resourceName in the format:
 // projects/<projectname>/locations/<location>/keyRings/<project>/cryptoKeys/<key-ring>/cryptoKeyVersions/1
 func DecryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byte) ([]byte, error) {
+	// Capture the decryption latency
+	latencyStart := time.Now()
 	// Construct the full key URI for Google Cloud KMS
 	keyURI := fmt.Sprintf("gcp-kms://%s", resourceName)
 
@@ -106,5 +132,13 @@ func DecryptBytes(ctx context.Context, resourceName string, bytesToDecrypt []byt
 	if err != nil {
 		return nil, fmt.Errorf("error encrypting data: %v", err)
 	}
+
+	elapsed := time.Since(latencyStart).Seconds()
+	requestId, ok := ctx.Value("requestid").(string)
+	if otelEnabled != "" && ok {
+		metricAttribute := attribute.String("gcsproxy-request-id", requestId)
+		DecryptTime.Record(ctx, elapsed, metric.WithAttributes(metricAttribute))
+	}
+
 	return decryptedBytes, nil
 }

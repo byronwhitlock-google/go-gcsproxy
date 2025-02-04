@@ -7,6 +7,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -58,7 +59,9 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	// Update the response content with the decrypted content
-	unencryptedBytes, err := crypto.DecryptBytes(f.Request.Raw().Context(),
+	ctx := f.Request.Raw().Context()
+	ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
+	unencryptedBytes, err := crypto.DecryptBytes(ctxValue,
 		util.GetKMSKeyName(bucketName),
 		f.Response.Body)
 	if err != nil {
@@ -89,7 +92,6 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 		if end >= len(unencryptedBytes)-1 {
 			end = len(unencryptedBytes)
 		}
-		
 
 		unencryptedByteSlice := unencryptedBytes[start:end]
 		unencryptedBytes = unencryptedByteSlice //TODO: Performance/profiling
