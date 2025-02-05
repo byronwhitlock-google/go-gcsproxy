@@ -49,18 +49,18 @@ func runServer() error {
 func main() {
 
 	// uncomment for testing locally
-	if err := os.Setenv("https_proxy", "http://127.0.0.1:9080"); err != nil {
-		fmt.Println("Error setting environment variable:", err)
-		return
-	}
-	if err := os.Setenv("REQUESTS_CA_BUNDLE", "/proxy/certs/mitmproxy-ca-cert.pem"); err != nil {
-		fmt.Println("Error setting environment variable:", err)
-		return
-	}
-	if err := os.Setenv("SSL_CERT_FILE", "/proxy/certs/mitmproxy-ca-cert.pem"); err != nil {
-		fmt.Println("Error setting environment variable:", err)
-		return
-	}
+	// if err := os.Setenv("https_proxy", "http://127.0.0.1:9080"); err != nil {
+	// 	fmt.Println("Error setting environment variable:", err)
+	// 	return
+	// }
+	// if err := os.Setenv("REQUESTS_CA_BUNDLE", "/proxy/certs/mitmproxy-ca-cert.pem"); err != nil {
+	// 	fmt.Println("Error setting environment variable:", err)
+	// 	return
+	// }
+	// if err := os.Setenv("SSL_CERT_FILE", "/proxy/certs/mitmproxy-ca-cert.pem"); err != nil {
+	// 	fmt.Println("Error setting environment variable:", err)
+	// 	return
+	// }
 
 	ctx := context.Background()
 

@@ -24,7 +24,7 @@ teardown() {
 
   run gcloud storage cat gs://$BUCKET/$TESTFILE
   assert_success
-  assert_output $expected_output  
+  echo $expected_output | assert_output
 }
 
 @test "Test gcloud storage cat - returns correct byte length" {
