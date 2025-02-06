@@ -7,6 +7,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"mime/multipart"
@@ -61,7 +62,9 @@ func ConvertSinglePartUploadtoMultiPartUpload(f *proxy.Flow) error {
 
 	// Encrypt data in body
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptBody, err := crypto.EncryptBytes(f.Request.Raw().Context(),
+	ctx := f.Request.Raw().Context()
+	ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
+	encryptBody, err := crypto.EncryptBytes(ctxValue,
 		util.GetKMSKeyName(bucketName),
 		f.Request.Body)
 	if err != nil {
@@ -126,7 +129,9 @@ func HandleSinglePartUploadResponse(f *proxy.Flow) error {
 
 func HandleSinglePartUploadRequest(f *proxy.Flow) error {
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
-	encryptedData, err := crypto.EncryptBytes(f.Request.Raw().Context(),
+	ctx := f.Request.Raw().Context()
+	ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
+	encryptedData, err := crypto.EncryptBytes(ctxValue,
 		util.GetKMSKeyName(bucketName),
 		f.Request.Body)
 

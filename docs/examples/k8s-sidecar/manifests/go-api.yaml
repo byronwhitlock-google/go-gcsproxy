@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gcs-proxy-go
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gcs-proxy-sa
+  namespace: gcs-proxy-go
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-gcs-app-deployment
+  namespace: gcs-proxy-go
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: go-gcs-app
+  template:
+    metadata:
+      labels:
+        app: go-gcs-app
+    spec:
+      serviceAccountName: gcs-proxy-sa
+      volumes:
+      - name: proxycerts
+        emptyDir: {}
+      containers:
+      - name: go-gcs-app
+        image: us-docker.pkg.dev/axlearn/gcs-app/go-api:v4
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "2"
+        env:
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://opentelemetry-collector.opentelemetry.svc.gcsproxy:4318
+          - name: https_proxy
+            value: "http://127.0.0.1:9080"
+          - name: REQUESTS_CA_BUNDLE
+            value: "/proxy/certs/mitmproxy-ca-cert.pem"
+          - name: SSL_CERT_FILE
+            value: "/proxy/certs/mitmproxy-ca-cert.pem"
+        volumeMounts:
+        - name: proxycerts
+          mountPath: /proxy/certs
+      - name: go-mitmproxy
+        image: us-docker.pkg.dev/axlearn/gcs-proxy/go-mitmproxy:v1.7
+        ports:
+        - containerPort: 9080
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "8Gi"
+            cpu: "2"
+        env:
+          - name: GCP_KMS_BUCKET_KEY_MAPPING
+            value: "*:projects/axlearn/locations/global/keyRings/proxy/cryptoKeys/proxy-kek"
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://opentelemetry-collector.opentelemetry.svc.gcsproxy:4318
+          # - name: GCS_PROXY_DISABLE_ENCRYPTION
+          #   value: "DISABLED"
+        volumeMounts:
+        - name: proxycerts
+          mountPath: /proxy/certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-gcs-app-loadbalancer
+  namespace: gcs-proxy-go
+spec:
+  type: LoadBalancer
+  selector:
+    app: go-gcs-app
+  ports:
+  - port: 80
+    targetPort: 8080
