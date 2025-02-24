@@ -1,5 +1,6 @@
-load '../helpers/bats-support/load'
-load '../helpers/bats-assert/load'
+load 'helpers/bats-support/load'
+load 'helpers/bats-assert/load'
+
 
 setup() {
   export TESTFILE="testfile_1.txt"
@@ -21,10 +22,10 @@ teardown() {
 
 @test "Test gcloud storage cat - returns exact object" {
   local expected_output=$(cat $TESTFILE)
-
   run gcloud storage cat gs://$BUCKET/$TESTFILE
   assert_success
-  echo $expected_output | assert_output
+
+  assert_output "$expected_output"
 }
 
 @test "Test gcloud storage cat - returns correct byte length" {
