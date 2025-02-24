@@ -42,13 +42,13 @@ const (
 )
 
 func InterceptGcsMethod(f *proxy.Flow) gcsMethod {
-	util.CreateFirstMultipartMimeHeader()
-	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
-	if util.GetKMSKeyName(bucketName) == "" {
-		return passThru
-	}
 	// GCS supports both hostnames
 	if f.Request.URL.Host == "storage.googleapis.com" || f.Request.URL.Host == "www.googleapis.com" {
+		bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+		if util.GetKMSKeyName(bucketName) == "" {
+			return passThru
+		}
+
 		// multi-part or simple upload
 		if strings.HasPrefix(f.Request.URL.Path, "/upload/storage/v1") {
 			if f.Request.Method == "POST" {

@@ -23,8 +23,8 @@ even Google from having access to their data.
     HTTP/HTTPS traffic for GCS operations.
   * Tink Library: Leverages the Tink library for robust cryptographic operations
     and secure key management.
-  * Easy-to-Use: Works out of the box with `gsutil` and `gcloud` commands,
-    requiring no complex configurations.
+  * Easy-to-Use: Works out of the box with `gsutil` and `gcloud` commands, `axlearn` and `tensorflow` libraries.
+    Requires no complex configurations.
   * Key Management:
       * Uses GCP KMS for key management.
       * Allows for specifying an encryption key per bucket using key-value pairs.

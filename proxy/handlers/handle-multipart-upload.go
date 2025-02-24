@@ -7,6 +7,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -114,6 +115,9 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	}
 
 	bucketName := util.GetBucketNameFromGcsMetadata(gcsMetadataMap)
+	if bucketName == "" {
+		bucketName = util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+	}
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -132,7 +136,10 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		}
 
 		// Encrypt the intercepted file
-		encryptedData, err = crypto.EncryptBytes(f.Request.Raw().Context(),
+
+		ctx := f.Request.Raw().Context()
+		ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
+		encryptedData, err = crypto.EncryptBytes(ctxValue,
 			util.GetKMSKeyName(bucketName),
 			unencryptedFileContent.Bytes())
 

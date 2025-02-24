@@ -8,9 +8,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	rawLog "log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,6 +20,7 @@ import (
 	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
 	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
 	gcsproxy "github.com/byronwhitlock-google/go-gcsproxy/proxy"
+	"go.opentelemetry.io/otel/metric"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,13 +38,56 @@ func main() {
 		os.Exit(0)
 	}()
 
-	initConfig()
-	runner := gcsproxy.NewProxyRunner(cfg.GlobalConfig)
-	err := runner.Start()
-	if err != nil {
-		log.Fatalf("Fatal error to start the GCS proxy. Error:", err)
+	otelEnabled := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+
+	// If OTEL is configured. Setup the custom metrics to capture encrypt/decrypt time.
+	if otelEnabled != "" {
+		initMetrics()
+		initConfig()
+		runner := gcsproxy.NewProxyRunner(cfg.GlobalConfig)
+
+		// Setup metrics, tracing, and context propagation
+		ctx := context.Background()
+		shutdown, err := setupOpenTelemetry(ctx)
+		if err != nil {
+			log.Fatalf("Error setting up OpenTelemetry. Error:", err)
+		}
+
+		// Start the GCS proxy server, and shutdown and flush telemetry after it exits.
+		slog.InfoContext(ctx, "server starting...")
+		if err = errors.Join(runner.Start(), shutdown(ctx)); err != nil {
+			log.Fatalf("Server exited with error. Error:", err)
+		}
 	} else {
-		log.Info("GCS proxy started successfully")
+		initConfig()
+		runner := gcsproxy.NewProxyRunner(cfg.GlobalConfig)
+		err := runner.Start()
+		if err != nil {
+			log.Fatalf("Fatal error to start the GCS proxy. Error:", err)
+		} else {
+			log.Info("GCS proxy started successfully")
+		}
+	}
+}
+
+func initMetrics() {
+	var err error
+	crypto.EncryptTime, err = crypto.Meter.Float64Gauge(
+		"proxy.encryptTime",
+		metric.WithDescription("GCS Proxy Encryption time"),
+		metric.WithUnit("seconds"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	crypto.DecryptTime, err = crypto.Meter.Float64Gauge(
+		"proxy.decryptTime",
+		metric.WithDescription("GCS Proxy Decryption time"),
+		metric.WithUnit("seconds"),
+	)
+	if err != nil {
+		panic(err)
 	}
 }
 
