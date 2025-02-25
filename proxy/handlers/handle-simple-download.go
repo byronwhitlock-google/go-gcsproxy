@@ -58,11 +58,15 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 	log.Debugf("encrypted content len :%v", len(f.Response.Body))
 
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
+	objectName := util.GetObjectNameFromRequestUri(f.Request.URL.Path)
+	keyID,err := util.ReadGcsMetadata(f.Request.Raw().Context(), bucketName, objectName)
+	
+	log.Debug(bucketName, objectName, keyID)
 	// Update the response content with the decrypted content
 	ctx := f.Request.Raw().Context()
 	ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
 	unencryptedBytes, err := crypto.DecryptBytes(ctxValue,
-		util.GetKMSKeyName(bucketName),
+		keyID,
 		f.Response.Body)
 	if err != nil {
 		return fmt.Errorf("unable to decrypt response body:%v", err)

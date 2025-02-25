@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
+	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
@@ -61,7 +62,7 @@ func updateGcsMetadata(ctx context.Context, authHeader string, bucketName string
 			"x-unencrypted-content-length": unencryptedContentLength,
 			"x-md5Hash":                    md5Hash,
 			"x-encryption-key":             GetKMSKeyName(bucketName),
-			"x-proxy-version":              "0.3", // TODO: Change this to the global Version in the main package ASAP
+			"x-proxy-version":              cfg.GlobalConfig.GCSProxyVersion, // TODO: Change this to the global Version in the main package ASAP
 		},
 	}
 	if _, err := obj.Update(ctx, objectAttrsToUpdate); err != nil {
@@ -69,4 +70,28 @@ func updateGcsMetadata(ctx context.Context, authHeader string, bucketName string
 	}
 	log.Debug("Object metadata updated successfully.")
 	return nil
+}
+
+
+func ReadGcsMetadata(ctx context.Context, bucketName string, objectName string) (string,error) {
+
+	// lets use the google SDK so we get some error handling and such.
+	// Create a new storage client with the bearer token
+	log.Debugf("updating  gs://%v/%v metadata.", bucketName, objectName)
+	
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return "",fmt.Errorf("failed to create client: %v", err)
+	}
+	defer client.Close()
+
+	// Get a handle to the object
+	obj := client.Bucket(bucketName).Object(objectName)
+
+	attrs, err := obj.Attrs(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get object attributes: %v", err)
+	}
+	log.Debug("Object metadata updated successfully.")
+	return attrs.Metadata["x-encryption-key"], nil
 }
