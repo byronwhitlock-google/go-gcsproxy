@@ -1,5 +1,5 @@
-load 'helpers/bats-support/load'
-load 'helpers/bats-assert/load'
+load '../helpers/bats-support/load'
+load '../helpers/bats-assert/load'
 
 setup() {
   export TESTFILE="testfile_25.txt"
@@ -68,7 +68,7 @@ teardown() {
     assert_output --partial "X-Goog-Meta-X-Encryption-Key: "     
 }
 
-@test "Test GCS Metadata - verify encryption-key" {      
+@test "Test GCS Metadata - verify proxy-version" {      
     
     #TODO: lookup proxy version we started proxy with. currently proxy started by user in another console, so this isn't available to this script
     #local expected_version=...    

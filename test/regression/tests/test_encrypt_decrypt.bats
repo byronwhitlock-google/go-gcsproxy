@@ -1,5 +1,5 @@
-load 'helpers/bats-support/load'
-load 'helpers/bats-assert/load'
+load '../helpers/bats-support/load'
+load '../helpers/bats-assert/load'
 
 setup() {
     export TESTFILE="hugefile.bin"
