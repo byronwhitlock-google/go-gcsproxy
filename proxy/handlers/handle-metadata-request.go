@@ -44,16 +44,14 @@ func HandleMetadataResponse(f *proxy.Flow) error {
 		gcsMetadataMap["size"] = customMetadata["x-unencrypted-content-length"]
 		gcsMetadataMap["md5Hash"] = customMetadata["x-md5Hash"]
 
-	} else {
-		return fmt.Errorf("unable to parse gcs metadata")
+		// Now write the gcs object metadata back to the multipart writer
+		jsonData, err := json.MarshalIndent(gcsMetadataMap, "", "\t")
+		if err != nil {
+			return fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
+		}
+		f.Response.Body = jsonData
+		log.Debug(fmt.Sprintf("rewrote metadata response: %s", f.Response.Body))
 	}
-	// Now write the gcs object metadata back to the multipart writer
-	jsonData, err := json.MarshalIndent(gcsMetadataMap, "", "\t")
-	if err != nil {
-		return fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
-	}
-	f.Response.Body = jsonData
-	log.Debug(fmt.Sprintf("rewrote metadata response: %s", f.Response.Body))
 
 	return nil
 }
