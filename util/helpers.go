@@ -97,15 +97,18 @@ func GetBucketNameFromRequestUri(urlPath string) string {
 	return bucketName
 }
 
-// f.Request.URL.Path
+// TODO: move this back to handle-singlepart-upload for clarity
 func GenerateMetadata(f *proxy.Flow, contentType string, objectName string) map[string]interface{} {
+	bucketName := GetBucketNameFromRequestUri(f.Request.URL.Path)
 	defaultMap := map[string]interface{}{
-		"bucket":      GetBucketNameFromRequestUri(f.Request.URL.Path),
+		"bucket":      bucketName,
 		"contentType": contentType,
 		"name":        objectName,
 		"metadata": map[string]interface{}{
 			"x-unencrypted-content-length": len(f.Request.Body),
 			"x-md5Hash":                    crypto.Base64MD5Hash(f.Request.Body),
+			"x-encryption-key":             GetKMSKeyName(bucketName),
+			"x-proxy-version":              "0.3", // TODO: Change this to the global Version in the main package ASAP
 		},
 	}
 	return defaultMap

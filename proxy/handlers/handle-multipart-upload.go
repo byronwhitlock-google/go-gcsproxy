@@ -160,6 +160,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 		customMetadata["x-unencrypted-content-length"] = len(unencryptedFileContent.String())
 		customMetadata["x-md5Hash"] = crypto.Base64MD5Hash(unencryptedFileContent.Bytes())
+		customMetadata["x-encryption-key"] = util.GetKMSKeyName(bucketName)
+		customMetadata["x-proxy-version"] = "0.3" // TODO: Change this to the global Version in the main package ASAP
 	}
 
 	log.Debug(string(gcsObjectMetadataJson))

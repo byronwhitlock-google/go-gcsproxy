@@ -52,6 +52,38 @@ teardown() {
     assert_output --partial "X-Goog-Meta-X-Md5hash: $expected_md5"     
 }
 
+@test "Test GCS Metadata - verify encryption-key" {      
+    
+    #TODO: lookup actual key we started proxy with. currently proxy started by user in another console, so this isn't available to this script
+    #local expected_key=...    
+    #trim whitespace
+    #expected_key=$(xargs <<< $expected_key)
+    
+    #NOTE DO NOT TRY A PIPE USING CURL. `curl...| grep` does not work. YOU WILL HAVE BEEN WARNED.  
+    run curl -s -I https://storage.googleapis.com/$BUCKET/$TESTFILE  \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            --cacert $CA_BUNDLE \
+            --proxy $HTTPS_PROXY
+    
+    assert_output --partial "X-Goog-Meta-X-Encryption-Key: "     
+}
+
+@test "Test GCS Metadata - verify encryption-key" {      
+    
+    #TODO: lookup proxy version we started proxy with. currently proxy started by user in another console, so this isn't available to this script
+    #local expected_version=...    
+    #trim whitespace
+    #expected_version=$(xargs <<< $expected_version)
+    
+    #NOTE DO NOT TRY A PIPE USING CURL. `curl...| grep` does not work. YOU WILL HAVE BEEN WARNED.  
+    run curl -s -I https://storage.googleapis.com/$BUCKET/$TESTFILE  \
+            -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+            --cacert $CA_BUNDLE \
+            --proxy $HTTPS_PROXY
+    
+    assert_output --partial "X-Goog-Meta-X-Proxy-Version: "     
+}
+
 @test "Teardown - gcloud storage rm" {
   run gcloud storage rm gs://$BUCKET/$TESTFILE
   assert_success

@@ -60,6 +60,8 @@ func updateGcsMetadata(ctx context.Context, authHeader string, bucketName string
 		Metadata: map[string]string{
 			"x-unencrypted-content-length": unencryptedContentLength,
 			"x-md5Hash":                    md5Hash,
+			"x-encryption-key":             GetKMSKeyName(bucketName),
+			"x-proxy-version":              "0.3", // TODO: Change this to the global Version in the main package ASAP
 		},
 	}
 	if _, err := obj.Update(ctx, objectAttrsToUpdate); err != nil {
