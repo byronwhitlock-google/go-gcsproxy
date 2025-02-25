@@ -20,11 +20,12 @@ if ! command -v bats &> /dev/null; then
   echo "  sudo apt install -y bats"
   echo "macOS with Homebrew"
   echo "  brew install bats-core"
+  echo "  brew install bats-support"
   exit 1
 fi
 
 # global_setup
-export HTTPS_PROXY=http://127.0.0.1:9080
+export HTTPS_PROXY=http://localhost:9080
 export REQUESTS_CA_BUNDLE=$CA_BUNDLE
 gcloud config set core/custom_ca_certs_file $REQUESTS_CA_BUNDLE
 
@@ -49,7 +50,8 @@ if [ -n "$1" ]; then
   fi
 else
   # No parameter, run all tests in the 'tests' directory
-  bats tests/*.bats
+  
+  bats ./tests/*.bats
 fi
 
 
