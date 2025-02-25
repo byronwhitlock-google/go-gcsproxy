@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	cfg "github.com/byronwhitlock-google/go-gcsproxy/config"
 	"github.com/byronwhitlock-google/go-gcsproxy/crypto"
 	"github.com/byronwhitlock-google/go-gcsproxy/util"
 	"github.com/byronwhitlock-google/go-mitmproxy/proxy"
@@ -118,6 +119,9 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 	if bucketName == "" {
 		bucketName = util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	}
+	kmsKeyID := util.GetKMSKeyName(bucketName)
+	log.Debug("Bucket and KMS key:  "+bucketName + " : " + kmsKeyID)
+	//log.Debug("KMS Key:%v", kmsKeyID)
 
 	//Grab the second part. this contains the unencrypted file content
 	part, err = multipartReader.NextPart()
@@ -140,7 +144,7 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 		ctx := f.Request.Raw().Context()
 		ctxValue := context.WithValue(ctx, "requestid", f.Id.String())
 		encryptedData, err = crypto.EncryptBytes(ctxValue,
-			util.GetKMSKeyName(bucketName),
+			kmsKeyID,
 			unencryptedFileContent.Bytes())
 
 		if err != nil {
@@ -160,6 +164,8 @@ func HandleMultipartRequest(f *proxy.Flow) error {
 
 		customMetadata["x-unencrypted-content-length"] = len(unencryptedFileContent.String())
 		customMetadata["x-md5Hash"] = crypto.Base64MD5Hash(unencryptedFileContent.Bytes())
+		customMetadata["x-kmskeyID"] = kmsKeyID
+		customMetadata["x-gcsproxy-version"] = cfg.GlobalConfig.GCSProxyVersion
 	}
 
 	log.Debug(string(gcsObjectMetadataJson))

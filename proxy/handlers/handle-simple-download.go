@@ -54,7 +54,7 @@ func HandleSimpleDownloadRequest(f *proxy.Flow) error {
 	return nil
 }
 
-func HandleSimpleDownloadResponse(f *proxy.Flow) error {
+func HandleSimpleDownloadResponse(f *proxy.Flow,kmsKeyID string) error {
 	log.Debugf("encrypted content len :%v", len(f.Response.Body))
 
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)

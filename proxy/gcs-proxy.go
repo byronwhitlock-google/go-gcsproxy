@@ -156,6 +156,7 @@ out:
 func (c *DecryptGcsPayload) Response(f *proxy.Flow) {
 
 	var err error
+	var kmsKeyID string
 
 	debugResponse(f)
 
@@ -174,16 +175,16 @@ out:
 		err = hdl.HandleMultipartResponse(f)
 		break out
 
-	case simpleDownload:
-		err = hdl.HandleSimpleDownloadResponse(f)
-		break out
-
 	case singlePartUpload:
 		err = hdl.HandleSinglePartUploadResponse(f)
 		break out
 
 	case metadataRequest:
-		err = hdl.HandleMetadataResponse(f)
+		kmsKeyID,err = hdl.HandleMetadataResponse(f)
+		break out
+	
+	case simpleDownload:
+		err = hdl.HandleSimpleDownloadResponse(f,kmsKeyID)
 		break out
 
 	case resumableUploadPost:

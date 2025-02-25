@@ -27,7 +27,7 @@ func HandleMetadataRequest(f *proxy.Flow) error {
 	return nil
 }
 
-func HandleMetadataResponse(f *proxy.Flow) error {
+func HandleMetadataResponse(f *proxy.Flow) (string,error) {
 
 	log.Debug(fmt.Sprintf("got metadata response: %s", f.Response.Body))
 
@@ -35,7 +35,7 @@ func HandleMetadataResponse(f *proxy.Flow) error {
 	var gcsMetadataMap map[string]interface{}
 	err := json.Unmarshal(f.Response.Body, &gcsMetadataMap)
 	if err != nil {
-		return fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
+		return "",fmt.Errorf("error unmarshalling gcsObjectMetadata: %v", err)
 	}
 
 	customMetadata, ok := gcsMetadataMap["metadata"].(map[string]interface{})
@@ -45,15 +45,21 @@ func HandleMetadataResponse(f *proxy.Flow) error {
 		gcsMetadataMap["md5Hash"] = customMetadata["x-md5Hash"]
 
 	} else {
-		return fmt.Errorf("unable to parse gcs metadata")
+		return "",fmt.Errorf("unable to parse gcs metadata")
 	}
 	// Now write the gcs object metadata back to the multipart writer
 	jsonData, err := json.MarshalIndent(gcsMetadataMap, "", "\t")
 	if err != nil {
-		return fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
+		return "",fmt.Errorf("error marshalling gcsObjectMetadata: %v", err)
 	}
 	f.Response.Body = jsonData
 	log.Debug(fmt.Sprintf("rewrote metadata response: %s", f.Response.Body))
 
-	return nil
+	kmsKeyID, ok := customMetadata["x-kmskeyID"].(string)
+    
+    if !ok {
+        return "", fmt.Errorf("x-kmskeyID is not a string or is missing")
+    }
+
+	return kmsKeyID,nil
 }

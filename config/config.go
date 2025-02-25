@@ -34,6 +34,7 @@ type Config struct {
 	Upstream        string // upstream proxy
 	UpstreamCert    bool   // Connect to upstream server to look up certificate details. Default: True
 	EncryptDisabled bool
+	GCSProxyVersion string
 }
 
 var GlobalConfig *Config // Global variable
@@ -43,9 +44,9 @@ func LoadConfig() *Config {
 	config.EncryptDisabled = isEncryptDisabled()
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/Users/lkolluru/working-dir/apple/go-gcsproxy/test")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
+	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "*:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/gcsproxy/cryptoKeyVersions/2")
 
 	flag.BoolVar(&config.Version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
@@ -63,6 +64,7 @@ func LoadConfig() *Config {
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
 	config.KmsBucketKeyMapping = getBucketKeyMappings(config.kmsBucketKeyMappingString)
+	config.GCSProxyVersion = "0.2"
 	GlobalConfig = config
 	return config
 }
