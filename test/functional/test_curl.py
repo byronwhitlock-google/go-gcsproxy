@@ -23,6 +23,10 @@ import time
 import subprocess
 
 import test_util
+import json
+from google.auth import default
+from google.auth.transport.requests import Request
+
 
 LOG_LEVEL_STR = os.environ.get("PROXY_FUNC_TEST_LOG_LEVEL", "INFO")
 log_level = getattr(logging, LOG_LEVEL_STR.upper(), logging.INFO)
@@ -56,43 +60,61 @@ def setup_data():
     }
 
 
-def test_cli_copy_cat(setup_data):
-    """Test case for gcloud storage cp to upload and cat to download """
+def test_curl_copy_command(setup_data):
+    """Test case for curl command to upload """
 
-    test_id = test_cli_copy_cat.__name__
+    test_id = test_curl_copy_command.__name__
     source = "/tmp/source"
     object_url = test_util.generate_object_url(
         GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
+    credentials, project_id = default(
+        scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    credentials.refresh(Request())
+    access_token = credentials.token
     expected = setup_data["original_object"]
     with open(source, 'w') as file:
         file.write(expected)
-           
+
+    
+    curl_command = [
+    "curl",
+    "-X", "POST",
+    "-H", f"Authorization: Bearer {access_token}",
+    "-H", "Content-Type: text/plain",  # Specify the file's content type
+    "--data-binary", f"@{OBJECT_NAME}",  # Specify the file to upload
+    f"https://storage.googleapis.com/upload/storage/v1/b/{TEST_BUCKET}/o?uploadType=media&name={OBJECT_NAME}"
+]       
 
     logger.info(f"Copying {source} to {object_url}")
-    result = subprocess.run(
-        ["gcloud", "storage", "cp", source, object_url], capture_output=True, text=True)
-    logger.info(f"Return Code: {result.returncode}")
-    logger.info(f"Output: {result.stdout}")
-    logger.info(f"Error: {result.stderr}", )
-    assert result.returncode == 0
-
-    result = subprocess.run(
-        ["gcloud", "storage", "cat", object_url], capture_output=True, text=True)
+    
+    result = subprocess.run(curl_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     logger.info(f"Return Code: {result.returncode}")
     logger.info(f"Output: {result.stdout}")
     logger.info(f"Error: {result.stderr}", )
 
+    ## Check for successful upload ##
     assert result.returncode == 0
-    assert expected == result.stdout.strip()
+
+    ## Check for original length ##
+    assert json.loads(result.stdout)["X-Goog-Meta-X-Unencrypted-Content-Length"] == len(OBJECT_CONTENT)
+
 
 def test_curl_copy_large_file_command(setup_data):
     """Test case for curl command to upload """
 
     test_id = test_curl_copy_large_file_command.__name__
-    testfile = "hugefile.bin"
+    source = "/tmp/source"
     object_url = test_util.generate_object_url(
-        GCS_TESTING_PATH, testfile, test_id=test_id)
-    
+        GCS_TESTING_PATH, OBJECT_NAME, test_id=test_id)
+    credentials, project_id = default(
+        scopes=["https://www.googleapis.com/auth/cloud-platform"])
+    credentials.refresh(Request())
+    access_token = credentials.token
+    expected = setup_data["original_object"]
+    with open(source, 'w') as file:
+        file.write(expected)
+
+    testfile = "hugefile.bin"
 
     # Run the dd command using subprocess
     subprocess.run([
@@ -104,17 +126,24 @@ def test_curl_copy_large_file_command(setup_data):
     ],stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     
-    result = subprocess.run(
-        ["gcloud", "storage", "cp", testfile, object_url], capture_output=True, text=True)     
+    curl_command = [
+    "curl",
+    "-X", "POST",
+    "-H", f"Authorization: Bearer {access_token}",
+    "-H", "Content-Type: text/plain",  # Specify the file's content type
+    "--data-binary", f"@{testfile}",  # Specify the file to upload
+    f"https://storage.googleapis.com/upload/storage/v1/b/{TEST_BUCKET}/o?uploadType=media&name={testfile}"
+]       
 
-    logger.info(f"Copying {testfile} to {object_url}")
+    logger.info(f"Copying {source} to {object_url}")
+    
+    result = subprocess.run(curl_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     logger.info(f"Return Code: {result.returncode}")
     logger.info(f"Output: {result.stdout}")
     logger.info(f"Error: {result.stderr}", )
 
     ## Check for successful upload ##
     assert result.returncode == 0
-
 
 
 if __name__ == "__main__":
