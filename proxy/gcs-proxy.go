@@ -148,6 +148,7 @@ out:
 		break out
 	}
 	if err != nil {
+		f.Request.Body = nil // on error don't upload anything
 		log.Error(err)
 		return
 	}
@@ -196,6 +197,8 @@ out:
 
 	}
 	if err != nil {
+		f.Response.StatusCode = 500 // set the error to 500
+		f.Response.Body = []byte(err.Error())
 		log.Error(err)
 		return
 	}
