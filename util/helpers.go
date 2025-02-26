@@ -97,15 +97,33 @@ func GetBucketNameFromRequestUri(urlPath string) string {
 	return bucketName
 }
 
-// f.Request.URL.Path
+func GetObjectNameFromRequestUri(urlPath string) string {
+	var objectName string
+	if strings.Contains(urlPath, "/o/") {
+		//Splits for the filepath with b in between
+		arr := strings.Split(urlPath, "/o/") //["/download/storage/v1/ehorning-axlearn","README.md"]
+		// Adding this because there might be a path for bucket, so grabbing only bucket name
+		objectName = arr[1]
+	} else {
+		// handle path=/bucket-name/object-path
+		objectName = ""
+	}
+	log.Debugf("GetObjectNameFromRequestUri objectName: %v", objectName)
+	return objectName
+}
+
+// TODO: move this back to handle-singlepart-upload for clarity
 func GenerateMetadata(f *proxy.Flow, contentType string, objectName string) map[string]interface{} {
+	bucketName := GetBucketNameFromRequestUri(f.Request.URL.Path)
 	defaultMap := map[string]interface{}{
-		"bucket":      GetBucketNameFromRequestUri(f.Request.URL.Path),
+		"bucket":      bucketName,
 		"contentType": contentType,
 		"name":        objectName,
 		"metadata": map[string]interface{}{
 			"x-unencrypted-content-length": len(f.Request.Body),
 			"x-md5Hash":                    crypto.Base64MD5Hash(f.Request.Body),
+			"x-encryption-key":             GetKMSKeyName(bucketName),
+			"x-proxy-version":              cfg.GlobalConfig.GCSProxyVersion,
 		},
 	}
 	return defaultMap
