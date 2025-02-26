@@ -59,7 +59,7 @@ func HandleSimpleDownloadResponse(f *proxy.Flow) error {
 
 	bucketName := util.GetBucketNameFromRequestUri(f.Request.URL.Path)
 	objectName := util.GetObjectNameFromRequestUri(f.Request.URL.Path)
-	keyID,err := util.ReadGcsMetadata(f.Request.Raw().Context(), bucketName, objectName)
+	keyID,err := util.GetObjectEncryptionKeyId(f.Request.Raw().Context(), bucketName, objectName)
 	
 	log.Debug(bucketName, objectName, keyID)
 	// Update the response content with the decrypted content

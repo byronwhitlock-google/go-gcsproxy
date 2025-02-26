@@ -123,7 +123,7 @@ func GenerateMetadata(f *proxy.Flow, contentType string, objectName string) map[
 			"x-unencrypted-content-length": len(f.Request.Body),
 			"x-md5Hash":                    crypto.Base64MD5Hash(f.Request.Body),
 			"x-encryption-key":             GetKMSKeyName(bucketName),
-			"x-proxy-version":              cfg.GlobalConfig.GCSProxyVersion, // TODO: Change this to the global Version in the main package ASAP
+			"x-proxy-version":              cfg.GlobalConfig.GCSProxyVersion,
 		},
 	}
 	return defaultMap
