@@ -56,7 +56,11 @@ func GetKMSEnvelopeClient(resourceName string) (*aead.KMSEnvelopeAEAD, error){
 	
 	if value, exists := clientMap[resourceName]; exists {
 		log.Debugf("KMS Envelope Client entry exists with value: %v", value)
-		return value,nil
+		//Cache validation for 4 hour
+		if time.Since(value.Lastupdated) > 240*time.Minute {
+			return nil,fmt.Errorf( "KMS Envelope Client vache validation expired")
+		}
+		return value.KmsEnvelopeClient,nil
 	}
 	return nil,fmt.Errorf( "KMS Envelope Client entry does not exist")
 }
@@ -92,7 +96,7 @@ func getNewKMSEnvelopeClient(ctx context.Context, resourceName string) (*aead.KM
 			return nil, fmt.Errorf("failed to create KMS AEAD envelope: %v", err)
 		}
 
-		cfg.GlobalConfig.KMSEnvelopeAEADClientMapping[resourceName] = envAEAD
+		cfg.GlobalConfig.KMSEnvelopeAEADClientMapping[resourceName] = cfg.KMSEnvelopeAEADClient{KmsEnvelopeClient:envAEAD,Lastupdated:time.Now()}//envAEAD
 
 		return envAEAD, nil
 	}
