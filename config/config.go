@@ -53,9 +53,9 @@ func LoadConfig() *Config {
 	config.EncryptDisabled = isEncryptDisabled()
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/Users/lkolluru/working-dir/apple/go-gcsproxy/test/")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/test")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
-	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "*:projects/cmetestproj/locations/global/keyRings/gcsproxytest/cryptoKeys/proxytest/")
+	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
 
 	flag.BoolVar(&config.Version, "version", false, "show go-gcsproxy version")
 	flag.StringVar(&config.Addr, "port", ":9080", "proxy listen addr")
