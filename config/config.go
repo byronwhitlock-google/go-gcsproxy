@@ -10,9 +10,17 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/google/tink/go/aead"
 	log "github.com/sirupsen/logrus"
 )
+
+// Define a struct
+type KMSEnvelopeAEADClient struct {
+	KmsEnvelopeClient   *aead.KMSEnvelopeAEAD
+	Lastupdated time.Time
+}
 
 type Config struct {
 	Version bool // show version
@@ -30,6 +38,7 @@ type Config struct {
 	// kms options
 	kmsBucketKeyMappingString string
 	KmsBucketKeyMapping       map[string]string
+	KMSEnvelopeAEADClientMapping       map[string]KMSEnvelopeAEADClient
 
 	Upstream        string // upstream proxy
 	UpstreamCert    bool   // Connect to upstream server to look up certificate details. Default: True
@@ -44,7 +53,7 @@ func LoadConfig() *Config {
 	config.EncryptDisabled = isEncryptDisabled()
 
 	defaultSslInsecure := envConfigBoolWithDefault("SSL_INSECURE", true)
-	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/certs")
+	defaultCertPath := envConfigStringWithDefault("PROXY_CERT_PATH", "/proxy/test")
 	defaultDebug := envConfigIntWithDefault("DEBUG_LEVEL", 0)
 	defaultKmsBucketKeyMappingString := envConfigStringWithDefault("GCP_KMS_BUCKET_KEY_MAPPING", "")
 
@@ -64,6 +73,7 @@ func LoadConfig() *Config {
 	flag.BoolVar(&config.UpstreamCert, "upstream_cert", false, "connect to upstream server to look up certificate details")
 	flag.Parse()
 	config.KmsBucketKeyMapping = getBucketKeyMappings(config.kmsBucketKeyMappingString)
+	config.KMSEnvelopeAEADClientMapping = make(map[string]KMSEnvelopeAEADClient)
 	config.GCSProxyVersion = "0.3"
 	GlobalConfig = config
 	return config
